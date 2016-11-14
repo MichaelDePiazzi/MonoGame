@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 
 namespace Microsoft.Xna.Framework.Graphics
 {
@@ -111,6 +112,9 @@ namespace Microsoft.Xna.Framework.Graphics
             }
 
             adapter._supportedDisplayModes = new DisplayModeCollection(modes);
+
+            if (adapter._currentDisplayMode == null)
+                adapter._currentDisplayMode = adapter._supportedDisplayModes.Last(m => m.Format == SurfaceFormat.Color);
 
             return adapter;
         }
