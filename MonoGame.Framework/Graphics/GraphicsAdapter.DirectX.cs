@@ -54,8 +54,8 @@ namespace Microsoft.Xna.Framework.Graphics
         {            
             var adapter = new GraphicsAdapter();
 
-            adapter.DeviceName = monitor.Description.DeviceName;
-            adapter.Description = device.Description1.Description;
+            adapter.DeviceName = monitor.Description.DeviceName.TrimEnd(new char[] {'\0'});
+            adapter.Description = device.Description1.Description.TrimEnd(new char[] {'\0'});
             adapter.DeviceId = device.Description1.DeviceId;
             adapter.Revision = device.Description1.Revision;
             adapter.VendorId = device.Description1.VendorId;
@@ -84,7 +84,7 @@ namespace Microsoft.Xna.Framework.Graphics
                 {
                     displayModes = monitor.GetDisplayModeList(formatTranslation.Key, 0);
                 }
-                catch (SharpDX.SharpDXException ex)
+                catch (SharpDX.SharpDXException)
                 {
                     var mode = new DisplayMode(desktopWidth, desktopHeight, SurfaceFormat.Color);
                     modes.Add(mode);

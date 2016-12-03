@@ -18,6 +18,7 @@ namespace MonoGame.Tools.Pipeline
         public static MainWindow Instance;
 
         private List<Pad> _pads;
+        private Clipboard _clipboard;
         private ContextMenu _contextMenu;
         private FileDialogFilter _mgcbFileFilter, _allFileFilter, _xnaFileFilter;
         private string[] monoLocations = {
@@ -29,6 +30,7 @@ namespace MonoGame.Tools.Pipeline
         public MainWindow()
         {
             _pads = new List<Pad>();
+            _clipboard = new Clipboard();
 
             InitializeComponent();
 
@@ -45,7 +47,7 @@ namespace MonoGame.Tools.Pipeline
                     foreach (var com in pad.Commands)
                         menu.Items.Add(com.CreateMenuItem());
 
-                    menuPads.Items.Add(menu);
+                    menuView.Items.Add(menu);
                 }
             }
 
@@ -60,13 +62,11 @@ namespace MonoGame.Tools.Pipeline
         protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
         {
             e.Cancel = !PipelineController.Instance.Exit();
-            base.OnClosing(e);
-        }
 
-        public override void Close()
-        {
-            Application.Instance.Quit();
-            base.Close();
+            if (!e.Cancel)
+                Xwt.Application.Exit();
+
+            base.OnClosing(e);
         }
 
         public void ShowContextMenu()
@@ -197,7 +197,7 @@ namespace MonoGame.Tools.Pipeline
 
         public void OutputAppend(string text)
         {
-            Application.Instance.Invoke(() => buildOutput.WriteLine(text));
+            Application.Instance.AsyncInvoke(() => buildOutput.WriteLine(text));
         }
 
         public void OutputClear()
@@ -383,6 +383,7 @@ namespace MonoGame.Tools.Pipeline
             cmdOpenItem.Enabled = info.OpenItem;
             cmdOpenItemWith.Enabled = info.OpenItemWith;
             cmdOpenItemLocation.Enabled = info.OpenItemLocation;
+            cmdCopyAssetPath.Enabled = info.CopyAssetPath;
             cmdRebuildItem.Enabled = info.RebuildItem;
 
             // Visibility of menu items can't be changed so 
@@ -398,6 +399,7 @@ namespace MonoGame.Tools.Pipeline
             AddContextMenu(cmAdd, ref sep);
             AddSeparator(ref sep);
             AddContextMenu(cmOpenItemLocation, ref sep);
+            AddContextMenu(cmCopyAssetPath, ref sep);
             AddContextMenu(cmRebuildItem, ref sep);
             AddSeparator(ref sep);
             AddContextMenu(cmExclude, ref sep);
@@ -461,6 +463,12 @@ namespace MonoGame.Tools.Pipeline
                 clearItem.Click += (sender, e) => PipelineController.Instance.ClearRecentList();
                 menuRecent.Items.Add(clearItem);
             }
+        }
+
+        public void SetClipboard(string text)
+        {
+            _clipboard.Clear();
+            _clipboard.Text = text;
         }
 
         #endregion
@@ -600,6 +608,11 @@ namespace MonoGame.Tools.Pipeline
         {
             if (PipelineController.Instance.SelectedItem != null)
                 Process.Start(PipelineController.Instance.GetFullPath(PipelineController.Instance.SelectedItem.Location));
+        }
+
+        private void CmdCopyAssetPath_Executed(object sender, EventArgs e)
+        {
+            PipelineController.Instance.CopyAssetPath();
         }
 
         private void CmdRebuildItem_Executed(object sender, EventArgs e)
