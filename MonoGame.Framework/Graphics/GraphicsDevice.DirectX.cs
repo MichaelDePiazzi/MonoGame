@@ -748,7 +748,7 @@ namespace Microsoft.Xna.Framework.Graphics
                 multisampleDesc.Quality = quality;
             }
 
-            int vSyncFrameLatency = PresentationParameters.PresentationInterval.GetFrameLatency();
+            int vSyncFrameLatency = 1;
 
             // If the swap chain already exists... update it.
             if (_swapChain != null)
