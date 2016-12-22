@@ -89,7 +89,6 @@ namespace Microsoft.Xna.Framework.Graphics
                     MonoGameDebug.LogDebugMessage($"Failed to get display mode list! {ex.GetType()}: {ex.Message}");
                     var mode = new DisplayMode(desktopWidth, desktopHeight, SurfaceFormat.Color);
                     modes.Add(mode);
-                    adapter._currentDisplayMode = mode;
                     break;
                 }
 
@@ -103,16 +102,11 @@ namespace Microsoft.Xna.Framework.Graphics
                         continue;
 
                     modes.Add(mode);
-
-                    if (mode.Width == desktopWidth && mode.Height == desktopHeight && mode.Format == SurfaceFormat.Color)
-                    {
-                        if (adapter._currentDisplayMode == null)
-                            adapter._currentDisplayMode = mode;
-                    }
                 }
             }
 
             adapter._supportedDisplayModes = new DisplayModeCollection(modes);
+            adapter._currentDisplayMode = adapter._supportedDisplayModes.FindClosestMode(desktopWidth, desktopHeight);
 
             if (adapter._currentDisplayMode == null)
             {
