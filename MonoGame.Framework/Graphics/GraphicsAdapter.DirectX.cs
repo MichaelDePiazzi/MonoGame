@@ -84,8 +84,9 @@ namespace Microsoft.Xna.Framework.Graphics
                 {
                     displayModes = monitor.GetDisplayModeList(formatTranslation.Key, 0);
                 }
-                catch (SharpDX.SharpDXException)
+                catch (SharpDX.SharpDXException ex)
                 {
+                    MonoGameDebug.LogDebugMessage($"Failed to get display mode list! {ex.GetType()}: {ex.Message}");
                     var mode = new DisplayMode(desktopWidth, desktopHeight, SurfaceFormat.Color);
                     modes.Add(mode);
                     adapter._currentDisplayMode = mode;
@@ -114,7 +115,10 @@ namespace Microsoft.Xna.Framework.Graphics
             adapter._supportedDisplayModes = new DisplayModeCollection(modes);
 
             if (adapter._currentDisplayMode == null)
+            {
                 adapter._currentDisplayMode = adapter._supportedDisplayModes.Last(m => m.Format == SurfaceFormat.Color);
+                MonoGameDebug.LogDebugMessage($"Current display mode ({desktopWidth}x{desktopHeight}) not found! Using {adapter._currentDisplayMode.Width}x{adapter._currentDisplayMode.Height} instead.");
+            }
 
             return adapter;
         }
