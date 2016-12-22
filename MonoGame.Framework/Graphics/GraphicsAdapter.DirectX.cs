@@ -109,10 +109,9 @@ namespace Microsoft.Xna.Framework.Graphics
             adapter._currentDisplayMode = adapter._supportedDisplayModes.FindClosestMode(desktopWidth, desktopHeight);
 
             if (adapter._currentDisplayMode == null)
-            {
-                adapter._currentDisplayMode = adapter._supportedDisplayModes.Last(m => m.Format == SurfaceFormat.Color);
+                MonoGameDebug.LogDebugMessage($"Current display mode ({desktopWidth}x{desktopHeight}) not found, nor was a fallback!");
+            else if ((adapter._currentDisplayMode.Width != desktopWidth) || (adapter._currentDisplayMode.Height != desktopHeight))
                 MonoGameDebug.LogDebugMessage($"Current display mode ({desktopWidth}x{desktopHeight}) not found! Using {adapter._currentDisplayMode.Width}x{adapter._currentDisplayMode.Height} instead.");
-            }
 
             return adapter;
         }
