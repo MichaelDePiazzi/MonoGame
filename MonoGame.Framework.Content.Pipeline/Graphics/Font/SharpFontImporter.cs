@@ -39,7 +39,8 @@ namespace Microsoft.Xna.Framework.Content.Pipeline.Graphics
 					foreach (char character in characters)
 					{
 						var glyph = ImportGlyph(character, face);
-						glyphList.Add(glyph);
+                        if (glyph != null)
+						    glyphList.Add(glyph);
 					}
 					Glyphs = glyphList;
 
@@ -90,6 +91,8 @@ namespace Microsoft.Xna.Framework.Content.Pipeline.Graphics
 		private Glyph ImportGlyph(char character, Face face)
 		{
 			uint glyphIndex = face.GetCharIndex(character);
+		    if (glyphIndex == 0)
+		        return null;
 			face.LoadGlyph(glyphIndex, LoadFlags.Default, LoadTarget.Normal);
 			face.Glyph.RenderGlyph(RenderMode.Normal);
 
