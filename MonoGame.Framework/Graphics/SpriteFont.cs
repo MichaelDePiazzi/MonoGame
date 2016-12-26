@@ -320,12 +320,11 @@ namespace Microsoft.Xna.Framework.Graphics
 
 				Vector2.Transform(ref p, ref transformation, out p);
 
-                var destRect = new Vector4( p.X, p.Y, 
-                                            currentGlyph.BoundsInTexture.Width * scale.X,
-                                            currentGlyph.BoundsInTexture.Height * scale.Y);
+                var size = new Vector2(currentGlyph.BoundsInTexture.Width * scale.X,
+                                       currentGlyph.BoundsInTexture.Height * scale.Y);
 
 				spriteBatch._batcher.CreateBatchItem().Set(
-                    _texture, destRect, currentGlyph.TextureCoords,
+                    _texture, p, size, currentGlyph.TextureCoords,
 					color, rotation, Vector2.Zero, effect, depth, spriteBatch._sortMode);
 
                 offset.X += currentGlyph.Width + currentGlyph.RightSideBearing;

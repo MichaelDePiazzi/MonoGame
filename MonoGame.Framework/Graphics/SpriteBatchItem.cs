@@ -24,7 +24,8 @@ namespace Microsoft.Xna.Framework.Graphics
 		}
 
         public void Set(Texture2D texture,
-            Vector4 destinationRectangle,
+            Vector2 position,
+            Vector2 size,
             Vector4 textureCoords,
             Color color,
             float rotation,
@@ -73,20 +74,20 @@ namespace Microsoft.Xna.Framework.Graphics
 
             if (rotation == 0f)
             {
-                destinationRectangle.X -= origin.X;
-                destinationRectangle.Y -= origin.Y;
+                position.X -= origin.X;
+                position.Y -= origin.Y;
 
-                vertexTL.Position.X = destinationRectangle.X;
-                vertexTL.Position.Y = destinationRectangle.Y;
+                vertexTL.Position.X = position.X;
+                vertexTL.Position.Y = position.Y;
 
-                vertexTR.Position.X = destinationRectangle.X + destinationRectangle.Z;
-                vertexTR.Position.Y = destinationRectangle.Y;
+                vertexTR.Position.X = position.X + size.X;
+                vertexTR.Position.Y = position.Y;
 
-                vertexBL.Position.X = destinationRectangle.X;
-                vertexBL.Position.Y = destinationRectangle.Y + destinationRectangle.W;
+                vertexBL.Position.X = position.X;
+                vertexBL.Position.Y = position.Y + size.Y;
 
-                vertexBR.Position.X = destinationRectangle.X + destinationRectangle.Z;
-                vertexBR.Position.Y = destinationRectangle.Y + destinationRectangle.W;
+                vertexBR.Position.X = position.X + size.X;
+                vertexBR.Position.Y = position.Y + size.Y;
             }
             else
             {
@@ -95,21 +96,21 @@ namespace Microsoft.Xna.Framework.Graphics
 
                 if (origin != Vector2.Zero)
                 {
-                    destinationRectangle.X -= origin.X * cos - origin.Y * sin;
-                    destinationRectangle.Y -= origin.X * sin + origin.Y * cos;
+                    position.X -= origin.X * cos - origin.Y * sin;
+                    position.Y -= origin.X * sin + origin.Y * cos;
                 }
 
-                vertexTL.Position.X = destinationRectangle.X;
-                vertexTL.Position.Y = destinationRectangle.Y;
+                vertexTL.Position.X = position.X;
+                vertexTL.Position.Y = position.Y;
 
-                vertexTR.Position.X = destinationRectangle.X + destinationRectangle.Z * cos;
-                vertexTR.Position.Y = destinationRectangle.Y + destinationRectangle.Z * sin;
+                vertexTR.Position.X = position.X + size.X * cos;
+                vertexTR.Position.Y = position.Y + size.X * sin;
 
-                vertexBL.Position.X = destinationRectangle.X - destinationRectangle.W * sin;
-                vertexBL.Position.Y = destinationRectangle.Y + destinationRectangle.W * cos;
+                vertexBL.Position.X = position.X - size.Y * sin;
+                vertexBL.Position.Y = position.Y + size.Y * cos;
 
-                vertexBR.Position.X = destinationRectangle.X + destinationRectangle.Z * cos - destinationRectangle.W * sin;
-                vertexBR.Position.Y = destinationRectangle.Y + destinationRectangle.Z * sin + destinationRectangle.W * cos;
+                vertexBR.Position.X = position.X + size.X * cos - size.Y * sin;
+                vertexBR.Position.Y = position.Y + size.X * sin + size.Y * cos;
             }
 
             // According to http://blogs.msdn.com/b/shawnhar/archive/2011/01/12/spritebatch-billboards-in-a-3d-world.aspx
