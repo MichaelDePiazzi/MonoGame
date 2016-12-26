@@ -252,13 +252,21 @@ namespace Microsoft.Xna.Framework.Graphics
 		{
             CheckValid(texture);
 
+            var size = sourceRectangle.HasValue
+                ? new Vector2(sourceRectangle.GetValueOrDefault().Width * scale.X, sourceRectangle.GetValueOrDefault().Height * scale.Y)
+                : new Vector2(texture.Width * scale.X, texture.Height * scale.Y);
+            var textureCoords = sourceRectangle.HasValue
+                ? texture.GetTextureCoords(sourceRectangle.GetValueOrDefault())
+                : FullTextureCoords;
+            origin *= scale;
+
             _batcher.CreateBatchItem().Set(texture,
-                position,
-                GetSize(ref sourceRectangle, texture, ref scale),
-                GetSourceTextureCoords(ref sourceRectangle, texture),
+                ref position,
+                ref size,
+                ref textureCoords,
 				color,
 				rotation,
-				origin * scale,
+				ref origin,
 				effects,
                 layerDepth,
 				_sortMode);
@@ -290,13 +298,21 @@ namespace Microsoft.Xna.Framework.Graphics
 		{
             CheckValid(texture);
 
+            var size = sourceRectangle.HasValue
+                ? new Vector2(sourceRectangle.GetValueOrDefault().Width * scale, sourceRectangle.GetValueOrDefault().Height * scale)
+                : new Vector2(texture.Width * scale, texture.Height * scale);
+            var textureCoords = sourceRectangle.HasValue
+                ? texture.GetTextureCoords(sourceRectangle.GetValueOrDefault())
+                : FullTextureCoords;
+            origin *= scale;
+
             _batcher.CreateBatchItem().Set(texture,
-                position,
-                GetSize(ref sourceRectangle, texture, scale),
-                GetSourceTextureCoords(ref sourceRectangle, texture),
+                ref position,
+                ref size,
+                ref textureCoords,
 				color,
 				rotation,
-				origin * scale,
+				ref origin,
 				effects,
                 layerDepth,
 				_sortMode);
@@ -326,16 +342,21 @@ namespace Microsoft.Xna.Framework.Graphics
 		{
             CheckValid(texture);
 
+            var position = new Vector2(destinationRectangle.X, destinationRectangle.Y);
+            var size = new Vector2(destinationRectangle.Width, destinationRectangle.Height);
+            var textureCoords = sourceRectangle.HasValue
+                ? texture.GetTextureCoords(sourceRectangle.GetValueOrDefault())
+                : FullTextureCoords;
+            origin.X *= ((float)destinationRectangle.Width / ((sourceRectangle.HasValue && sourceRectangle.Value.Width != 0) ? sourceRectangle.Value.Width : texture.Width));
+            origin.Y *= ((float)destinationRectangle.Height / ((sourceRectangle.HasValue && sourceRectangle.Value.Height != 0) ? sourceRectangle.Value.Height : texture.Height));
+
             _batcher.CreateBatchItem().Set(texture,
-                  new Vector2(destinationRectangle.X,
-			                  destinationRectangle.Y),
-			       new Vector2(destinationRectangle.Width,
-			                  destinationRectangle.Height),
-			      GetSourceTextureCoords(ref sourceRectangle, texture),
+                  ref position,
+			      ref size,
+			      ref textureCoords,
 			      color,
 			      rotation,
-			      new Vector2(origin.X * ((float)destinationRectangle.Width / ((sourceRectangle.HasValue && sourceRectangle.Value.Width != 0) ? sourceRectangle.Value.Width : texture.Width)),
-                              origin.Y * ((float)destinationRectangle.Height / ((sourceRectangle.HasValue && sourceRectangle.Value.Height != 0) ? sourceRectangle.Value.Height : texture.Height))),
+			      ref origin,
 			      effects,
                   layerDepth,
 			      _sortMode);
@@ -518,27 +539,6 @@ namespace Microsoft.Xna.Framework.Graphics
             var source = new SpriteFont.CharacterSource(text);
             spriteFont.DrawInto(this, ref source, position, color, rotation, origin, scale, effects, layerDepth);
 		}
-
-        private static Vector2 GetSize(ref Rectangle? sourceRectangle, Texture2D texture, float scale)
-        {
-            return sourceRectangle.HasValue
-                ? new Vector2(sourceRectangle.GetValueOrDefault().Width * scale, sourceRectangle.GetValueOrDefault().Height * scale)
-                : new Vector2(texture.Width * scale, texture.Height * scale);
-        }
-
-        private static Vector2 GetSize(ref Rectangle? sourceRectangle, Texture2D texture, ref Vector2 scale)
-        {
-            return sourceRectangle.HasValue
-                ? new Vector2(sourceRectangle.GetValueOrDefault().Width * scale.X, sourceRectangle.GetValueOrDefault().Height * scale.Y)
-                : new Vector2(texture.Width * scale.X, texture.Height * scale.Y);
-        }
-
-        private static Vector4 GetSourceTextureCoords(ref Rectangle? sourceRectangle, Texture2D texture)
-        {
-            return sourceRectangle.HasValue
-                ? texture.GetTextureCoords(sourceRectangle.GetValueOrDefault())
-                : FullTextureCoords;
-        }
 
         /// <summary>
         /// Immediately releases the unmanaged resources used by this object.

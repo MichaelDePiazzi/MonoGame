@@ -23,6 +23,8 @@ namespace Microsoft.Xna.Framework.Graphics
 		
 		private readonly Texture2D _texture;
 
+        private static Vector2 _zeroVector = Vector2.Zero;
+
 		class CharComparer: IEqualityComparer<char>
 		{
 			public bool Equals(char x, char y)
@@ -324,8 +326,8 @@ namespace Microsoft.Xna.Framework.Graphics
                                        currentGlyph.BoundsInTexture.Height * scale.Y);
 
 				spriteBatch._batcher.CreateBatchItem().Set(
-                    _texture, p, size, currentGlyph.TextureCoords,
-					color, rotation, Vector2.Zero, effect, depth, spriteBatch._sortMode);
+                    _texture, ref p, ref size, ref currentGlyph.TextureCoords,
+					color, rotation, ref _zeroVector, effect, depth, spriteBatch._sortMode);
 
                 offset.X += currentGlyph.Width + currentGlyph.RightSideBearing;
 			}

@@ -24,12 +24,12 @@ namespace Microsoft.Xna.Framework.Graphics
 		}
 
         public void Set(Texture2D texture,
-            Vector2 position,
-            Vector2 size,
-            Vector4 textureCoords,
+            ref Vector2 position,
+            ref Vector2 size,
+            ref Vector4 textureCoords,
             Color color,
             float rotation,
-            Vector2 origin,
+            ref Vector2 origin,
             SpriteEffects effect,
             float depth,
             SpriteSortMode sortMode)
