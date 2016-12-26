@@ -13,9 +13,9 @@ namespace Microsoft.Xna.Framework.Graphics
 	public class SpriteBatch : GraphicsResource
 	{
         #region Private Fields
-        readonly SpriteBatcher _batcher;
+        internal readonly SpriteBatcher _batcher;
 
-		SpriteSortMode _sortMode;
+		internal SpriteSortMode _sortMode;
 		BlendState _blendState;
 		SamplerState _samplerState;
 		DepthStencilState _depthStencilState; 
@@ -28,9 +28,8 @@ namespace Microsoft.Xna.Framework.Graphics
         readonly EffectPass _spritePass;
 
 		Matrix _matrix;
-		Rectangle _tempRect = new Rectangle (0,0,0,0);
-		Vector2 _texCoordTL = new Vector2 (0,0);
-		Vector2 _texCoordBR = new Vector2 (0,0);
+
+        private static readonly Vector4 FullTextureCoords = new Vector4(0, 0, 1, 1);
         #endregion
 
         internal static bool NeedsHalfPixelOffset;
@@ -253,23 +252,17 @@ namespace Microsoft.Xna.Framework.Graphics
 		{
             CheckValid(texture);
 
-            var w = texture.Width * scale.X;
-            var h = texture.Height * scale.Y;
-			if (sourceRectangle.HasValue)
-            {
-				w = sourceRectangle.Value.Width*scale.X;
-				h = sourceRectangle.Value.Height*scale.Y;
-			}
-
-            DrawInternal(texture,
-				new Vector4(position.X, position.Y, w, h),
-				sourceRectangle,
+            _batcher.CreateBatchItem().Set(texture,
+                GetDestinationRectangle(ref position, ref sourceRectangle, texture, ref scale),
+                GetSourceTextureCoords(ref sourceRectangle, texture),
 				color,
 				rotation,
 				origin * scale,
 				effects,
                 layerDepth,
-				true);
+				_sortMode);
+
+            FlushIfNeeded();
 		}
 
         /// <summary>
@@ -296,23 +289,17 @@ namespace Microsoft.Xna.Framework.Graphics
 		{
             CheckValid(texture);
 
-            var w = texture.Width * scale;
-            var h = texture.Height * scale;
-            if (sourceRectangle.HasValue)
-            {
-                w = sourceRectangle.Value.Width * scale;
-                h = sourceRectangle.Value.Height * scale;
-            }
-
-            DrawInternal(texture,
-                new Vector4(position.X, position.Y, w, h),
-				sourceRectangle,
+            _batcher.CreateBatchItem().Set(texture,
+                GetDestinationRectangle(ref position, ref sourceRectangle, texture, scale),
+                GetSourceTextureCoords(ref sourceRectangle, texture),
 				color,
 				rotation,
 				origin * scale,
 				effects,
                 layerDepth,
-				true);
+				_sortMode);
+
+            FlushIfNeeded();
 		}
 
         /// <summary>
@@ -337,110 +324,21 @@ namespace Microsoft.Xna.Framework.Graphics
 		{
             CheckValid(texture);
 
-            DrawInternal(texture,
-			      new Vector4(destinationRectangle.X,
+            _batcher.CreateBatchItem().Set(texture,
+                  new Vector4(destinationRectangle.X,
 			                  destinationRectangle.Y,
 			                  destinationRectangle.Width,
 			                  destinationRectangle.Height),
-			      sourceRectangle,
+			      GetSourceTextureCoords(ref sourceRectangle, texture),
 			      color,
 			      rotation,
-			      new Vector2(origin.X * ((float)destinationRectangle.Width / (float)( (sourceRectangle.HasValue && sourceRectangle.Value.Width != 0) ? sourceRectangle.Value.Width : texture.Width)),
-                        			origin.Y * ((float)destinationRectangle.Height) / (float)( (sourceRectangle.HasValue && sourceRectangle.Value.Height != 0) ? sourceRectangle.Value.Height : texture.Height)),
+			      new Vector2(origin.X * ((float)destinationRectangle.Width / ((sourceRectangle.HasValue && sourceRectangle.Value.Width != 0) ? sourceRectangle.Value.Width : texture.Width)),
+                              origin.Y * ((float)destinationRectangle.Height / ((sourceRectangle.HasValue && sourceRectangle.Value.Height != 0) ? sourceRectangle.Value.Height : texture.Height))),
 			      effects,
                   layerDepth,
-			      true);
-		}
+			      _sortMode);
 
-		internal void DrawInternal (Texture2D texture,
-			Vector4 destinationRectangle,
-			Rectangle? sourceRectangle,
-			Color color,
-			float rotation,
-			Vector2 origin,
-			SpriteEffects effect,
-			float depth,
-			bool autoFlush)
-		{
-			var item = _batcher.CreateBatchItem();
-
-			item.Texture = texture;
-
-            // set SortKey based on SpriteSortMode.
-            switch ( _sortMode )
-            {
-                // Comparison of Texture objects.
-                case SpriteSortMode.Texture:
-                    item.SortKey = texture.SortingKey;
-                    break;
-                // Comparison of Depth
-                case SpriteSortMode.FrontToBack:
-                    item.SortKey = depth;
-                    break;
-                // Comparison of Depth in reverse
-                case SpriteSortMode.BackToFront:
-                    item.SortKey = -depth;
-                    break;
-            }
-
-			if (sourceRectangle.HasValue)
-            {
-				_tempRect = sourceRectangle.Value;
-                _texCoordTL.X = _tempRect.X / (float)texture.Width;
-                _texCoordTL.Y = _tempRect.Y / (float)texture.Height;
-                _texCoordBR.X = (_tempRect.X + _tempRect.Width) / (float)texture.Width;
-                _texCoordBR.Y = (_tempRect.Y + _tempRect.Height) / (float)texture.Height;
-            }
-            else
-            {
-                _texCoordTL.X = 0f;
-                _texCoordTL.Y = 0f;
-                _texCoordBR.X = 1f;
-                _texCoordBR.Y = 1f;
-            }
-            
-			if ((effect & SpriteEffects.FlipVertically) != 0) {
-                var temp = _texCoordBR.Y;
-				_texCoordBR.Y = _texCoordTL.Y;
-				_texCoordTL.Y = temp;
-			}
-			if ((effect & SpriteEffects.FlipHorizontally) != 0) {
-                var temp = _texCoordBR.X;
-				_texCoordBR.X = _texCoordTL.X;
-				_texCoordTL.X = temp;
-			}
-
-		    if (rotation == 0f)
-		    {
-                item.Set(destinationRectangle.X - origin.X,
-                        destinationRectangle.Y - origin.Y,
-                        destinationRectangle.Z,
-                        destinationRectangle.W,
-                        color,
-                        _texCoordTL,
-                        _texCoordBR,
-                        depth);
-            }
-            else
-		    {
-                item.Set(destinationRectangle.X,
-                        destinationRectangle.Y,
-                        -origin.X,
-                        -origin.Y,
-                        destinationRectangle.Z,
-                        destinationRectangle.W,
-                        (float)Math.Sin(rotation),
-                        (float)Math.Cos(rotation),
-                        color,
-                        _texCoordTL,
-                        _texCoordBR,
-                        depth);
-            }
-
-			if (autoFlush)
-			{
-				FlushIfNeeded();
-			}
+            FlushIfNeeded();
 		}
 
 		// Mark the end of a draw operation for Immediate SpriteSortMode.
@@ -618,6 +516,27 @@ namespace Microsoft.Xna.Framework.Graphics
             var source = new SpriteFont.CharacterSource(text);
             spriteFont.DrawInto(this, ref source, position, color, rotation, origin, scale, effects, layerDepth);
 		}
+
+        private static Vector4 GetDestinationRectangle(ref Vector2 position, ref Rectangle? sourceRectangle, Texture2D texture, float scale)
+        {
+            return sourceRectangle.HasValue
+                ? new Vector4(position.X, position.Y, sourceRectangle.GetValueOrDefault().Width * scale, sourceRectangle.GetValueOrDefault().Height * scale)
+                : new Vector4(position.X, position.Y, texture.Width * scale, texture.Height * scale);
+        }
+
+        private static Vector4 GetDestinationRectangle(ref Vector2 position, ref Rectangle? sourceRectangle, Texture2D texture, ref Vector2 scale)
+        {
+            return sourceRectangle.HasValue
+                ? new Vector4(position.X, position.Y, sourceRectangle.GetValueOrDefault().Width * scale.X, sourceRectangle.GetValueOrDefault().Height * scale.Y)
+                : new Vector4(position.X, position.Y, texture.Width * scale.X, texture.Height * scale.Y);
+        }
+
+        private static Vector4 GetSourceTextureCoords(ref Rectangle? sourceRectangle, Texture2D texture)
+        {
+            return sourceRectangle.HasValue
+                ? texture.GetTextureCoords(sourceRectangle.GetValueOrDefault())
+                : FullTextureCoords;
+        }
 
         /// <summary>
         /// Immediately releases the unmanaged resources used by this object.

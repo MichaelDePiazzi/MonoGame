@@ -55,6 +55,7 @@ namespace Microsoft.Xna.Framework.Graphics
 				var glyph = new Glyph 
                 {
 					BoundsInTexture = glyphBounds[i],
+                    TextureCoords = _texture.GetTextureCoords(glyphBounds[i]),
 					Cropping = cropping[i],
                     Character = characters[i],
 
@@ -323,9 +324,9 @@ namespace Microsoft.Xna.Framework.Graphics
                                             currentGlyph.BoundsInTexture.Width * scale.X,
                                             currentGlyph.BoundsInTexture.Height * scale.Y);
 
-				spriteBatch.DrawInternal(
-                    _texture, destRect, currentGlyph.BoundsInTexture,
-					color, rotation, Vector2.Zero, effect, depth, false);
+				spriteBatch._batcher.CreateBatchItem().Set(
+                    _texture, destRect, currentGlyph.TextureCoords,
+					color, rotation, Vector2.Zero, effect, depth, spriteBatch._sortMode);
 
                 offset.X += currentGlyph.Width + currentGlyph.RightSideBearing;
 			}
@@ -379,6 +380,10 @@ namespace Microsoft.Xna.Framework.Graphics
             /// Rectangle in the font texture where this letter exists.
             /// </summary>
 			public Rectangle BoundsInTexture;
+            /// <summary>
+            /// Texture coordinates of this glyph
+            /// </summary>
+			public Vector4 TextureCoords;
             /// <summary>
             /// Cropping applied to the BoundsInTexture to calculate the bounds of the actual character.
             /// </summary>
