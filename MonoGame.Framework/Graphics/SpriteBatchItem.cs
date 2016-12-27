@@ -39,9 +39,6 @@ namespace Microsoft.Xna.Framework.Graphics
             // set SortKey based on SpriteSortMode.
             switch (sortMode)
             {
-                case SpriteSortMode.Deferred:
-                case SpriteSortMode.Immediate:
-                    break;
                 // Comparison of Texture objects.
                 case SpriteSortMode.Texture:
                     SortKey = texture.SortingKey;
@@ -56,20 +53,17 @@ namespace Microsoft.Xna.Framework.Graphics
                     break;
             }
 
-            if ((effect & (SpriteEffects.FlipHorizontally | SpriteEffects.FlipVertically)) != 0)
+            if ((effect & SpriteEffects.FlipHorizontally) != 0)
             {
-                if ((effect & SpriteEffects.FlipHorizontally) != 0)
-                {
-                    var temp = textureCoords.Z;
-                    textureCoords.Z = textureCoords.X;
-                    textureCoords.X = temp;
-                }
-                if ((effect & SpriteEffects.FlipVertically) != 0)
-                {
-                    var temp = textureCoords.W;
-                    textureCoords.W = textureCoords.Y;
-                    textureCoords.Y = temp;
-                }
+                var temp = textureCoords.Z;
+                textureCoords.Z = textureCoords.X;
+                textureCoords.X = temp;
+            }
+            if ((effect & SpriteEffects.FlipVertically) != 0)
+            {
+                var temp = textureCoords.W;
+                textureCoords.W = textureCoords.Y;
+                textureCoords.Y = temp;
             }
 
             if (rotation == 0f)
@@ -94,11 +88,8 @@ namespace Microsoft.Xna.Framework.Graphics
                 var sin = (float)Math.Sin(rotation);
                 var cos = (float)Math.Cos(rotation);
 
-                if (origin != Vector2.Zero)
-                {
-                    position.X -= origin.X * cos - origin.Y * sin;
-                    position.Y -= origin.X * sin + origin.Y * cos;
-                }
+                position.X -= origin.X * cos - origin.Y * sin;
+                position.Y -= origin.X * sin + origin.Y * cos;
 
                 vertexTL.Position.X = position.X;
                 vertexTL.Position.Y = position.Y;
