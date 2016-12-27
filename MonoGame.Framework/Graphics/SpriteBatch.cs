@@ -29,7 +29,7 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		Matrix _matrix;
 
-        private static readonly Vector4 FullTextureCoords = new Vector4(0, 0, 1, 1);
+        private static Vector4 _fullTextureCoords = new Vector4(0, 0, 1, 1);
         #endregion
 
         internal static bool NeedsHalfPixelOffset;
@@ -252,24 +252,39 @@ namespace Microsoft.Xna.Framework.Graphics
 		{
             CheckValid(texture);
 
-            var size = sourceRectangle.HasValue
-                ? new Vector2(sourceRectangle.GetValueOrDefault().Width * scale.X, sourceRectangle.GetValueOrDefault().Height * scale.Y)
-                : new Vector2(texture.Width * scale.X, texture.Height * scale.Y);
-            var textureCoords = sourceRectangle.HasValue
-                ? texture.GetTextureCoords(sourceRectangle.GetValueOrDefault())
-                : FullTextureCoords;
-            origin *= scale;
+            origin.X *= scale.X;
+		    origin.Y *= scale.Y;
 
-            _batcher.CreateBatchItem().Set(texture,
-                ref position,
-                ref size,
-                ref textureCoords,
-				color,
-				rotation,
-				ref origin,
-				effects,
-                layerDepth,
-				_sortMode);
+		    if (sourceRectangle.HasValue)
+		    {
+		        var sourceRectangleValue = sourceRectangle.GetValueOrDefault();
+		        var size = new Vector2(sourceRectangleValue.Width * scale.X, sourceRectangleValue.Height * scale.Y);
+		        var textureCoords = texture.GetTextureCoords(sourceRectangleValue);
+                _batcher.CreateBatchItem().Set(texture,
+                    ref position,
+                    ref size,
+                    ref textureCoords,
+                    color,
+                    rotation,
+                    ref origin,
+                    effects,
+                    layerDepth,
+                    _sortMode);
+            }
+            else
+		    {
+                var size = new Vector2(texture.Width * scale.X, texture.Height * scale.Y);
+                _batcher.CreateBatchItem().Set(texture,
+                    ref position,
+                    ref size,
+                    ref _fullTextureCoords,
+                    color,
+                    rotation,
+                    ref origin,
+                    effects,
+                    layerDepth,
+                    _sortMode);
+            }
 
             FlushIfNeeded();
 		}
@@ -298,24 +313,39 @@ namespace Microsoft.Xna.Framework.Graphics
 		{
             CheckValid(texture);
 
-            var size = sourceRectangle.HasValue
-                ? new Vector2(sourceRectangle.GetValueOrDefault().Width * scale, sourceRectangle.GetValueOrDefault().Height * scale)
-                : new Vector2(texture.Width * scale, texture.Height * scale);
-            var textureCoords = sourceRectangle.HasValue
-                ? texture.GetTextureCoords(sourceRectangle.GetValueOrDefault())
-                : FullTextureCoords;
-            origin *= scale;
+            origin.X *= scale;
+            origin.Y *= scale;
 
-            _batcher.CreateBatchItem().Set(texture,
-                ref position,
-                ref size,
-                ref textureCoords,
-				color,
-				rotation,
-				ref origin,
-				effects,
-                layerDepth,
-				_sortMode);
+            if (sourceRectangle.HasValue)
+            {
+                var sourceRectangleValue = sourceRectangle.GetValueOrDefault();
+                var size = new Vector2(sourceRectangleValue.Width * scale, sourceRectangleValue.Height * scale);
+                var textureCoords = texture.GetTextureCoords(sourceRectangleValue);
+                _batcher.CreateBatchItem().Set(texture,
+                    ref position,
+                    ref size,
+                    ref textureCoords,
+                    color,
+                    rotation,
+                    ref origin,
+                    effects,
+                    layerDepth,
+                    _sortMode);
+            }
+            else
+            {
+                var size = new Vector2(texture.Width * scale, texture.Height * scale);
+                _batcher.CreateBatchItem().Set(texture,
+                    ref position,
+                    ref size,
+                    ref _fullTextureCoords,
+                    color,
+                    rotation,
+                    ref origin,
+                    effects,
+                    layerDepth,
+                    _sortMode);
+            }
 
             FlushIfNeeded();
 		}
@@ -346,7 +376,7 @@ namespace Microsoft.Xna.Framework.Graphics
             var size = new Vector2(destinationRectangle.Width, destinationRectangle.Height);
             var textureCoords = sourceRectangle.HasValue
                 ? texture.GetTextureCoords(sourceRectangle.GetValueOrDefault())
-                : FullTextureCoords;
+                : _fullTextureCoords;
             origin.X *= ((float)destinationRectangle.Width / ((sourceRectangle.HasValue && sourceRectangle.Value.Width != 0) ? sourceRectangle.Value.Width : texture.Width));
             origin.Y *= ((float)destinationRectangle.Height / ((sourceRectangle.HasValue && sourceRectangle.Value.Height != 0) ? sourceRectangle.Value.Height : texture.Height));
 
