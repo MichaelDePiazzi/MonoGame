@@ -352,6 +352,33 @@ namespace Microsoft.Xna.Framework.Graphics
 			      true);
 		}
 
+	    public void Draw(Texture2D texture, VertexPositionColorTexture[] vertices, float layerDepth = 0f)
+	    {
+            var item = _batcher.CreateBatchItem();
+
+            item.Texture = texture;
+
+            switch (_sortMode)
+            {
+                case SpriteSortMode.Texture:
+                    item.SortKey = texture.SortingKey;
+                    break;
+                case SpriteSortMode.FrontToBack:
+                    item.SortKey = layerDepth;
+                    break;
+                case SpriteSortMode.BackToFront:
+                    item.SortKey = -layerDepth;
+                    break;
+            }
+
+            item.vertexTL = vertices[0];
+            item.vertexTR = vertices[1];
+            item.vertexBL = vertices[2];
+            item.vertexBR = vertices[3];
+
+            FlushIfNeeded();
+        }
+
 		internal void DrawInternal (Texture2D texture,
 			Vector4 destinationRectangle,
 			Rectangle? sourceRectangle,
