@@ -3,6 +3,7 @@
 // file 'LICENSE.txt', which is part of this source code package.
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace Microsoft.Xna.Framework.Graphics
@@ -157,6 +158,15 @@ namespace Microsoft.Xna.Framework.Graphics
                 throw new InvalidOperationException("Draw was called, but Begin has not yet been called. Begin must be called successfully before you can call Draw.");
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void CheckValidOpt(Texture2D texture)
+        {
+            if (texture == null)
+                throw new ArgumentNullException("texture");
+            if (!_beginCalled)
+                throw new InvalidOperationException("Draw was called, but Begin has not yet been called. Begin must be called successfully before you can call Draw.");
+        }
+
         void CheckValid(SpriteFont spriteFont, string text)
         {
             if (spriteFont == null)
@@ -229,6 +239,111 @@ namespace Microsoft.Xna.Framework.Graphics
             }
         }
 
+        public void DrawOpt(Texture2D texture,
+                Vector2? position = null,
+                Rectangle? destinationRectangle = null,
+                Rectangle? sourceRectangle = null,
+                Vector2? origin = null,
+                float rotation = 0f,
+                Vector2? scale = null,
+                Color? color = null,
+                SpriteEffects effects = SpriteEffects.None,
+                float layerDepth = 0f)
+        {
+            CheckValidOpt(texture);
+
+            // If both drawRectangle and position are null, or if both have been assigned a value, raise an error
+            if (destinationRectangle.HasValue == position.HasValue)
+                throw new InvalidOperationException("Expected drawRectangle or position, but received neither or both.");
+
+            var item = _batcher.CreateBatchItem();
+
+            if (position.HasValue)
+            {
+                if (sourceRectangle.HasValue)
+                    SetPartialTexture(texture, sourceRectangle.GetValueOrDefault());
+                else
+                    SetFullTexture(texture);
+                ApplyFlip(effects);
+
+                if (origin.HasValue)
+                {
+                    _origin = origin.GetValueOrDefault();
+                    if (scale.HasValue)
+                        ApplyScale(scale.GetValueOrDefault());
+                    if (rotation == 0f)
+                    {
+                        SetPosition(position.GetValueOrDefault());
+                        item.SetPosition(_position, _size);
+                    }
+                    else
+                    {
+                        var sin = (float)Math.Sin(rotation);
+                        var cos = (float)Math.Cos(rotation);
+                        SetRotatedPosition(position.GetValueOrDefault(), sin, cos);
+                        item.SetRotatedPosition(_position, _size, sin, cos);
+                    }
+                }
+                else
+                {
+                    _origin = Vector2.Zero;
+                    if (scale.HasValue)
+                        ApplyScaleToSizeOnly(scale.GetValueOrDefault());
+                    if (rotation == 0f)
+                    {
+                        item.SetPosition(position.GetValueOrDefault(), _size);
+                    }
+                    else
+                    {
+                        var sin = (float)Math.Sin(rotation);
+                        var cos = (float)Math.Cos(rotation);
+                        item.SetRotatedPosition(position.GetValueOrDefault(), _size, sin, cos);
+                    }
+                }
+            }
+            else
+            {
+                var destRectValue = destinationRectangle.GetValueOrDefault();
+                if (sourceRectangle.HasValue)
+                    SetPartialTexture(texture, sourceRectangle.GetValueOrDefault());
+                else
+                    SetFullTexture(destRectValue);
+                ApplyFlip(effects);
+
+                if (origin.HasValue)
+                {
+                    _origin = origin.GetValueOrDefault();
+                    _origin.X *= (_size.X / texture.Width);
+                    _origin.X *= (_size.Y / texture.Height);
+                }
+                else
+                {
+                    _origin = Vector2.Zero;
+                }
+
+                if (rotation == 0f)
+                {
+                    SetPosition(new Vector2(destRectValue.X, destRectValue.Y));
+                    item.SetPosition(_position, _size);
+                }
+                else
+                {
+                    var sin = (float)Math.Sin(rotation);
+                    var cos = (float)Math.Cos(rotation);
+                    SetRotatedPosition(new Vector2(destRectValue.X, destRectValue.Y), sin, cos);
+                    item.SetRotatedPosition(_position, _size, sin, cos);
+                }
+            }
+            item.SetDepth(layerDepth);
+            if (color.HasValue)
+                item.SetColor(color.GetValueOrDefault());
+            else
+                item.SetDefaultColor();
+            item.SetTextureCoords(_texCoordTL, _texCoordBR);
+
+            FlushIfNeeded();
+        }
+
         /// <summary>
         /// Submit a sprite for drawing in the current batch.
         /// </summary>
@@ -271,6 +386,46 @@ namespace Microsoft.Xna.Framework.Graphics
                 layerDepth,
 				true);
 		}
+
+        public void DrawOpt(Texture2D texture,
+                Vector2 position,
+                Rectangle? sourceRectangle,
+                Color color,
+                float rotation,
+                Vector2 origin,
+                Vector2 scale,
+                SpriteEffects effects,
+                float layerDepth)
+        {
+            CheckValid(texture);
+
+            if (sourceRectangle.HasValue)
+                SetPartialTexture(texture, sourceRectangle.GetValueOrDefault());
+            else
+                SetFullTexture(texture);
+            _origin = origin;
+            ApplyScale(scale);
+            ApplyFlip(effects);
+
+            var item = _batcher.CreateBatchItem();
+            if (rotation == 0f)
+            {
+                SetPosition(position);
+                item.SetPosition(_position, _size);
+            }
+            else
+            {
+                var sin = (float)Math.Sin(rotation);
+                var cos = (float)Math.Cos(rotation);
+                SetRotatedPosition(position, sin, cos);
+                item.SetRotatedPosition(_position, _size, sin, cos);
+            }
+            item.SetDepth(layerDepth);
+            item.SetColor(color);
+            item.SetTextureCoords(_texCoordTL, _texCoordBR);
+
+            FlushIfNeeded();
+        }
 
         /// <summary>
         /// Submit a sprite for drawing in the current batch.
@@ -479,6 +634,13 @@ namespace Microsoft.Xna.Framework.Graphics
 			}
 		}
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void FlushIfNeededOpt()
+        {
+            if (_sortMode == SpriteSortMode.Immediate)
+                _batcher.DrawBatch(_sortMode, _effect);
+        }
+
         /// <summary>
         /// Submit a sprite for drawing in the current batch.
         /// </summary>
@@ -509,10 +671,91 @@ namespace Microsoft.Xna.Framework.Graphics
         /// <param name="texture">A texture.</param>
         /// <param name="position">The drawing location on screen.</param>
         /// <param name="color">A color mask.</param>
-		public void Draw (Texture2D texture, Vector2 position, Color color)
+        public void Draw (Texture2D texture, Vector2 position, Color color)
 		{
 			Draw (texture, position, null, color);
 		}
+
+        public void DrawOpt(Texture2D texture, Vector2 position, Color color)
+        {
+            CheckValidOpt(texture);
+
+            SetFullTexture(texture);
+
+            var item = _batcher.CreateBatchItem();
+            item.Texture = texture;
+            item.SortKey = (_sortMode == SpriteSortMode.Texture) ? texture.SortingKey : 0f;
+            item.SetPosition(position, _size);
+            item.SetMisc(color, _texCoordTL, _texCoordBR, 0f);
+
+            FlushIfNeededOpt();
+        }
+
+        public void DrawOpt2(Texture2D texture, Vector2 position, Color color)
+        {
+            CheckValidOpt(texture);
+
+            var item = _batcher.CreateBatchItem();
+            item.Texture = texture;
+            item.SortKey = (_sortMode == SpriteSortMode.Texture) ? texture.SortingKey : 0f;
+            item.SetPosition(position, texture.width, texture.Height);
+            item.SetDefaultDepth();
+            item.SetColor(color);
+            item.SetFullTextureCoords();
+
+            FlushIfNeededOpt();
+        }
+
+        public void DrawOpt3(Texture2D texture, Vector2 position, Color color)
+        {
+            if (texture == null)
+                throw new ArgumentNullException("texture");
+            if (!_beginCalled)
+                throw new InvalidOperationException("Draw was called, but Begin has not yet been called. Begin must be called successfully before you can call Draw.");
+
+            var item = _batcher.CreateBatchItem();
+            item.Texture = texture;
+            item.SortKey = (_sortMode == SpriteSortMode.Texture) ? texture.SortingKey : 0f;
+
+            item.vertexTL.Position.X = position.X;
+            item.vertexTL.Position.Y = position.Y;
+
+            float w = texture.width;
+            item.vertexTR.Position.X = position.X + w;
+            item.vertexTR.Position.Y = position.Y;
+
+            item.vertexBL.Position.X = position.X;
+            float h = texture.Height;
+            item.vertexBL.Position.Y = position.Y + h;
+
+            item.vertexBR.Position.X = position.X + w;
+            item.vertexBR.Position.Y = position.Y + h;
+
+            item.vertexTL.Position.Z = 0f;
+            item.vertexTR.Position.Z = 0f;
+            item.vertexBL.Position.Z = 0f;
+            item.vertexBR.Position.Z = 0f;
+
+            item.vertexTL.Color = color;
+            item.vertexTR.Color = color;
+            item.vertexBL.Color = color;
+            item.vertexBR.Color = color;
+
+            item.vertexTL.TextureCoordinate.X = 0f;
+            item.vertexTL.TextureCoordinate.Y = 0f;
+
+            item.vertexTR.TextureCoordinate.X = 1f;
+            item.vertexTR.TextureCoordinate.Y = 0f;
+
+            item.vertexBL.TextureCoordinate.X = 0f;
+            item.vertexBL.TextureCoordinate.Y = 1f;
+
+            item.vertexBR.TextureCoordinate.X = 1f;
+            item.vertexBR.TextureCoordinate.Y = 1f;
+
+            if (_sortMode == SpriteSortMode.Immediate)
+                _batcher.DrawBatch(_sortMode, _effect);
+        }
 
         /// <summary>
         /// Submit a sprite for drawing in the current batch.
@@ -645,6 +888,128 @@ namespace Microsoft.Xna.Framework.Graphics
             var source = new SpriteFont.CharacterSource(text);
             spriteFont.DrawInto(this, ref source, position, color, rotation, origin, scale, effects, layerDepth);
 		}
+
+        private Vector2 _size, _origin, _position;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SetFullTexture(Texture2D texture)
+        {
+            _texCoordTL.X = 0f;
+            _texCoordTL.Y = 0f;
+            _texCoordBR.X = 1f;
+            _texCoordBR.Y = 1f;
+
+            _size.X = texture.Width;
+            _size.Y = texture.Height;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SetFullTexture(Rectangle destinationRectangle)
+        {
+            _texCoordTL.X = 0f;
+            _texCoordTL.Y = 0f;
+            _texCoordBR.X = 1f;
+            _texCoordBR.Y = 1f;
+
+            _size.X = destinationRectangle.Width;
+            _size.Y = destinationRectangle.Height;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SetFullTexture(int width, int height)
+        {
+            _texCoordTL.X = 0f;
+            _texCoordTL.Y = 0f;
+            _texCoordBR.X = 1f;
+            _texCoordBR.Y = 1f;
+
+            _size.X = width;
+            _size.Y = height;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+	    public void SetPartialTexture(Texture2D texture, Rectangle sourceRectangle)
+	    {
+            _texCoordTL.X = sourceRectangle.X * texture._texelSize.X;
+            _texCoordTL.Y = sourceRectangle.Y * texture._texelSize.Y;
+            _texCoordBR.X = (sourceRectangle.X + sourceRectangle.Width) * texture._texelSize.X;
+            _texCoordBR.Y = (sourceRectangle.Y + sourceRectangle.Height) * texture._texelSize.Y;
+
+            _size.X = sourceRectangle.Width;
+            _size.Y = sourceRectangle.Height;
+        }
+
+	    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+	    public void ApplyScale(float scale)
+	    {
+	        _origin.X *= scale;
+	        _origin.Y *= scale;
+	        _size.X *= scale;
+	        _size.Y *= scale;
+	    }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void ApplyScale(Vector2 scale)
+        {
+            _origin.X *= scale.X;
+            _origin.Y *= scale.Y;
+            _size.X *= scale.X;
+            _size.Y *= scale.Y;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void ApplyScaleToSizeOnly(Vector2 scale)
+        {
+            _size.X *= scale.X;
+            _size.Y *= scale.Y;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void ApplyFlip(SpriteEffects effects)
+	    {
+            if ((effects & SpriteEffects.FlipVertically) != 0)
+            {
+                var temp = _texCoordBR.Y;
+                _texCoordBR.Y = _texCoordTL.Y;
+                _texCoordTL.Y = temp;
+            }
+            if ((effects & SpriteEffects.FlipHorizontally) != 0)
+            {
+                var temp = _texCoordBR.X;
+                _texCoordBR.X = _texCoordTL.X;
+                _texCoordTL.X = temp;
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SetPosition(Vector2 position)
+	    {
+	        _position.X = position.X - _origin.X;
+	        _position.Y = position.Y - _origin.Y;
+	    }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SetRotatedPosition(Vector2 position, float sin, float cos)
+        {
+            _position.X = position.X - (_origin.X * cos - _origin.Y * sin);
+            _position.Y = position.Y - (_origin.X * sin + _origin.Y * cos);
+        }
+
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public float GetSortKey(Texture2D texture, float depth)
+	    {
+            switch (_sortMode)
+            {
+                case SpriteSortMode.Texture:
+                    return texture.SortingKey;
+                case SpriteSortMode.FrontToBack:
+                    return depth;
+                case SpriteSortMode.BackToFront:
+                    return -depth;
+            }
+	        return 0f;
+	    }
 
         /// <summary>
         /// Immediately releases the unmanaged resources used by this object.

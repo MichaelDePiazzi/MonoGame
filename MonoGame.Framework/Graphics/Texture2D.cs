@@ -19,6 +19,9 @@ namespace Microsoft.Xna.Framework.Graphics
 		internal int width;
 		internal int height;
         internal int ArraySize;
+
+        internal readonly Vector2 _texelSize;
+
         /// <summary>
         /// Gets the dimensions of the texture
         /// </summary>
@@ -98,6 +101,8 @@ namespace Microsoft.Xna.Framework.Graphics
             this._format = format;
             this._levelCount = mipmap ? CalculateMipLevels(width, height) : 1;
             this.ArraySize = arraySize;
+
+            _texelSize = new Vector2(1f / width, 1f / height);
 
             // Texture will be assigned by the swap chain.
 		    if (type == SurfaceType.SwapChainRenderTarget)
