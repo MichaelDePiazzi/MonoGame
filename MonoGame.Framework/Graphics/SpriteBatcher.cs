@@ -278,6 +278,11 @@ namespace Microsoft.Xna.Framework.Graphics
                     VertexPositionColorTexture.VertexDeclaration);
             }
         }
+
+	    public void Reset()
+	    {
+	        _batchItemCount = 0;
+	    }
 	}
 }
 

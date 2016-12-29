@@ -303,35 +303,47 @@ namespace Microsoft.Xna.Framework.Graphics
             }
             else
             {
-                var destRectValue = destinationRectangle.GetValueOrDefault();
                 if (sourceRectangle.HasValue)
-                    SetPartialTexture(texture, sourceRectangle.GetValueOrDefault());
+                    SetPartialTextureCoordsOnly(texture, sourceRectangle.GetValueOrDefault());
                 else
-                    SetFullTexture(destRectValue);
+                    SetFullTextureCoordsOnly();
                 ApplyFlip(effects);
+
+                var destRectValue = destinationRectangle.GetValueOrDefault();
+                _size.X = destRectValue.Width;
+                _size.Y = destRectValue.Height;
 
                 if (origin.HasValue)
                 {
                     _origin = origin.GetValueOrDefault();
-                    _origin.X *= (_size.X / texture.Width);
-                    _origin.X *= (_size.Y / texture.Height);
-                }
-                else
-                {
-                    _origin = Vector2.Zero;
-                }
+                    _origin.X *= (_size.X / ((sourceRectangle.HasValue && sourceRectangle.Value.Width != 0) ? sourceRectangle.Value.Width : texture.Width));
+                    _origin.Y *= (_size.Y / ((sourceRectangle.HasValue && sourceRectangle.Value.Height != 0) ? sourceRectangle.Value.Height : texture.Height));
 
-                if (rotation == 0f)
-                {
-                    SetPosition(new Vector2(destRectValue.X, destRectValue.Y));
-                    item.SetPosition(_position, _size);
+                    if (rotation == 0f)
+                    {
+                        SetPosition(new Vector2(destRectValue.X, destRectValue.Y));
+                        item.SetPosition(_position, _size);
+                    }
+                    else
+                    {
+                        var sin = (float)Math.Sin(rotation);
+                        var cos = (float)Math.Cos(rotation);
+                        SetRotatedPosition(new Vector2(destRectValue.X, destRectValue.Y), sin, cos);
+                        item.SetRotatedPosition(_position, _size, sin, cos);
+                    }
                 }
                 else
                 {
-                    var sin = (float)Math.Sin(rotation);
-                    var cos = (float)Math.Cos(rotation);
-                    SetRotatedPosition(new Vector2(destRectValue.X, destRectValue.Y), sin, cos);
-                    item.SetRotatedPosition(_position, _size, sin, cos);
+                    if (rotation == 0f)
+                    {
+                        item.SetPosition(new Vector2(destRectValue.X, destRectValue.Y), _size);
+                    }
+                    else
+                    {
+                        var sin = (float)Math.Sin(rotation);
+                        var cos = (float)Math.Cos(rotation);
+                        item.SetRotatedPosition(new Vector2(destRectValue.X, destRectValue.Y), _size, sin, cos);
+                    }
                 }
             }
             item.SetDepth(layerDepth);
@@ -630,7 +642,8 @@ namespace Microsoft.Xna.Framework.Graphics
 		{
 			if (_sortMode == SpriteSortMode.Immediate)
 			{
-				_batcher.DrawBatch(_sortMode, _effect);
+				//_batcher.DrawBatch(_sortMode, _effect);
+                _batcher.Reset();
 			}
 		}
 
@@ -638,7 +651,8 @@ namespace Microsoft.Xna.Framework.Graphics
         internal void FlushIfNeededOpt()
         {
             if (_sortMode == SpriteSortMode.Immediate)
-                _batcher.DrawBatch(_sortMode, _effect);
+                //_batcher.DrawBatch(_sortMode, _effect);
+                _batcher.Reset();
         }
 
         /// <summary>
@@ -754,7 +768,8 @@ namespace Microsoft.Xna.Framework.Graphics
             item.vertexBR.TextureCoordinate.Y = 1f;
 
             if (_sortMode == SpriteSortMode.Immediate)
-                _batcher.DrawBatch(_sortMode, _effect);
+                //_batcher.DrawBatch(_sortMode, _effect);
+                _batcher.Reset();
         }
 
         /// <summary>
@@ -892,6 +907,15 @@ namespace Microsoft.Xna.Framework.Graphics
         private Vector2 _size, _origin, _position;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SetFullTextureCoordsOnly()
+        {
+            _texCoordTL.X = 0f;
+            _texCoordTL.Y = 0f;
+            _texCoordBR.X = 1f;
+            _texCoordBR.Y = 1f;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetFullTexture(Texture2D texture)
         {
             _texCoordTL.X = 0f;
@@ -939,7 +963,16 @@ namespace Microsoft.Xna.Framework.Graphics
             _size.Y = sourceRectangle.Height;
         }
 
-	    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SetPartialTextureCoordsOnly(Texture2D texture, Rectangle sourceRectangle)
+        {
+            _texCoordTL.X = sourceRectangle.X * texture._texelSize.X;
+            _texCoordTL.Y = sourceRectangle.Y * texture._texelSize.Y;
+            _texCoordBR.X = (sourceRectangle.X + sourceRectangle.Width) * texture._texelSize.X;
+            _texCoordBR.Y = (sourceRectangle.Y + sourceRectangle.Height) * texture._texelSize.Y;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
 	    public void ApplyScale(float scale)
 	    {
 	        _origin.X *= scale;
