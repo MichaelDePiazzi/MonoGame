@@ -928,30 +928,6 @@ namespace Microsoft.Xna.Framework.Graphics
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetFullTexture(Rectangle destinationRectangle)
-        {
-            _texCoordTL.X = 0f;
-            _texCoordTL.Y = 0f;
-            _texCoordBR.X = 1f;
-            _texCoordBR.Y = 1f;
-
-            _size.X = destinationRectangle.Width;
-            _size.Y = destinationRectangle.Height;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetFullTexture(int width, int height)
-        {
-            _texCoordTL.X = 0f;
-            _texCoordTL.Y = 0f;
-            _texCoordBR.X = 1f;
-            _texCoordBR.Y = 1f;
-
-            _size.X = width;
-            _size.Y = height;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
 	    public void SetPartialTexture(Texture2D texture, Rectangle sourceRectangle)
 	    {
             _texCoordTL.X = sourceRectangle.X * texture._texelSize.X;
@@ -1027,7 +1003,6 @@ namespace Microsoft.Xna.Framework.Graphics
             _position.X = position.X - (_origin.X * cos - _origin.Y * sin);
             _position.Y = position.Y - (_origin.X * sin + _origin.Y * cos);
         }
-
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float GetSortKey(Texture2D texture, float depth)
