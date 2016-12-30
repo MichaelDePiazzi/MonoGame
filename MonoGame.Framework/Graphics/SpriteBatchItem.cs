@@ -88,6 +88,24 @@ namespace Microsoft.Xna.Framework.Graphics
             vertexBR.TextureCoordinate.Y = texCoordBR.Y;
         }
 
+        public void SetVertices(VertexPositionColorTexture[] vertices)
+        {
+            vertexTL = vertices[0];
+            vertexTR = vertices[1];
+            vertexBL = vertices[2];
+            vertexBR = vertices[3];
+        }
+
+        public void SetVertices(
+            ref VertexPositionColorTexture vertexTL, ref VertexPositionColorTexture vertexTR,
+            ref VertexPositionColorTexture vertexBL, ref VertexPositionColorTexture vertexBR)
+        {
+            this.vertexTL = vertexTL;
+            this.vertexTR = vertexTR;
+            this.vertexBL = vertexBL;
+            this.vertexBR = vertexBR;
+        }
+
         #region Implement IComparable
         public int CompareTo(SpriteBatchItem other)
         {

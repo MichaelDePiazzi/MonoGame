@@ -352,8 +352,13 @@ namespace Microsoft.Xna.Framework.Graphics
 			      true);
 		}
 
-	    public void Draw(Texture2D texture, VertexPositionColorTexture[] vertices, float layerDepth = 0f)
-	    {
+        public void Draw(Texture2D texture,
+            ref VertexPositionColorTexture vertexTL, ref VertexPositionColorTexture vertexTR,
+            ref VertexPositionColorTexture vertexBL, ref VertexPositionColorTexture vertexBR,
+            float layerDepth = 0f)
+        {
+            CheckValid(texture);
+
             var item = _batcher.CreateBatchItem();
 
             item.Texture = texture;
@@ -371,10 +376,33 @@ namespace Microsoft.Xna.Framework.Graphics
                     break;
             }
 
-            item.vertexTL = vertices[0];
-            item.vertexTR = vertices[1];
-            item.vertexBL = vertices[2];
-            item.vertexBR = vertices[3];
+            item.SetVertices(ref vertexTL, ref vertexTR, ref vertexBL, ref vertexBR);
+
+            FlushIfNeeded();
+        }
+
+	    public void Draw(Texture2D texture, VertexPositionColorTexture[] vertices, float layerDepth = 0f)
+	    {
+            CheckValid(texture);
+
+            var item = _batcher.CreateBatchItem();
+
+            item.Texture = texture;
+
+            switch (_sortMode)
+            {
+                case SpriteSortMode.Texture:
+                    item.SortKey = texture.SortingKey;
+                    break;
+                case SpriteSortMode.FrontToBack:
+                    item.SortKey = layerDepth;
+                    break;
+                case SpriteSortMode.BackToFront:
+                    item.SortKey = -layerDepth;
+                    break;
+            }
+
+            item.SetVertices(vertices);
 
             FlushIfNeeded();
         }
