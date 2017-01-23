@@ -295,8 +295,8 @@ namespace Microsoft.Xna.Framework.Audio
             //
             // Assuming it is correct to pan all channels which have a left/right component.
 
-            var lVal = (1.0f - pan) * scale;
-            var rVal = (1.0f + pan) * scale;
+            var lVal = Math.Min(1.0f - pan, 1f) * scale;
+            var rVal = Math.Min(1.0f + pan, 1f) * scale;
 
             switch (SoundEffect.Speakers)
             {
