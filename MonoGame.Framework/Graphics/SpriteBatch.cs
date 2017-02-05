@@ -59,6 +59,13 @@ namespace Microsoft.Xna.Framework.Graphics
             _batcher = new SpriteBatcher(graphicsDevice);
 
             _beginCalled = false;
+
+            // Set static values from Matrix.CreateOrthographicOffCenter(0, Width, Height, 0, 0, -1)
+            // Other values are either 0, or dynamic
+            _projection.M33 = 1f;
+            _projection.M41 = -1f;
+            _projection.M42 = 1f;
+            _projection.M44 = 1f;
 		}
 
         /// <summary>
@@ -134,13 +141,17 @@ namespace Microsoft.Xna.Framework.Graphics
                 // Normal 3D cameras look into the -z direction (z = 1 is in font of z = 0). The
                 // sprite batch layer depth is the opposite (z = 0 is in front of z = 1).
                 // --> We get the correct matrix with near plane 0 and far plane -1.
-                Matrix.CreateOrthographicOffCenter(0, vp.Width, vp.Height, 0, 0, -1, out _projection);
+
+                // Optimised unrolled version of: Matrix.CreateOrthographicOffCenter(0, vp.Width, vp.Height, 0, 0, -1);
+                // Only dynamic values are re-calculated. Static values were already set in the constructor.
+                _projection.M11 = 2f / vp.Width;
+                _projection.M22 = 2f / -vp.Height;
 
                 // Some platforms require a half pixel offset to match DX.
                 if (NeedsHalfPixelOffset)
                 {
-                    _projection.M41 += -0.5f * _projection.M11;
-                    _projection.M42 += -0.5f * _projection.M22;
+                    _projection.M41 = -1f - (0.5f * _projection.M11);
+                    _projection.M42 = 1f - (0.5f * _projection.M22);
                 }
 
                 _lastViewport = vp;
@@ -149,8 +160,27 @@ namespace Microsoft.Xna.Framework.Graphics
             if (_matrix.HasValue)
             {
                 var transformMatrix = _matrix.GetValueOrDefault();
+
+                // Optimised unrolled version of: Matrix.Multiply(ref transformMatrix, ref _projection, out projection);
+                // Because there are mostly static values in the _projection matrix, several multiplies can be skipped
                 Matrix projection;
-                Matrix.Multiply(ref transformMatrix, ref _projection, out projection);
+                projection.M11 = (transformMatrix.M11 * _projection.M11) + (transformMatrix.M14 * _projection.M41);
+                projection.M12 = (transformMatrix.M12 * _projection.M22) + (transformMatrix.M14 * _projection.M42);
+                projection.M13 = transformMatrix.M13;
+                projection.M14 = transformMatrix.M14;
+                projection.M21 = (transformMatrix.M21 * _projection.M11) + (transformMatrix.M24 * _projection.M41);
+                projection.M22 = (transformMatrix.M22 * _projection.M22) + (transformMatrix.M24 * _projection.M42);
+                projection.M23 = transformMatrix.M23;
+                projection.M24 = transformMatrix.M24;
+                projection.M31 = (transformMatrix.M31 * _projection.M11) + (transformMatrix.M34 * _projection.M41);
+                projection.M32 = (transformMatrix.M32 * _projection.M22) + (transformMatrix.M34 * _projection.M42);
+                projection.M33 = transformMatrix.M33;
+                projection.M34 = transformMatrix.M34;
+                projection.M41 = (transformMatrix.M41 * _projection.M11) + (transformMatrix.M44 * _projection.M41);
+                projection.M42 = (transformMatrix.M42 * _projection.M22) + (transformMatrix.M44 * _projection.M42);
+                projection.M43 = transformMatrix.M43;
+                projection.M44 = transformMatrix.M44;
+
                 _matrixTransform.SetValue(projection);
             }
             else
