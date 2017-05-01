@@ -381,7 +381,7 @@ namespace MonoGame.Framework
 
                 Thread.Sleep(100);
             } 
-            while (PeekMessage(out msg, IntPtr.Zero, 0, 0, 1));
+            while (PeekMessage(out msg, IntPtr.Zero, 0, 1 << 5, 1));
         }
 
         internal void UpdateWindows()
