@@ -109,6 +109,12 @@ namespace MonoGame.Tools.Pipeline
 
         public static void Load()
         {
+            Style.Add<ApplicationHandler>("PipelineTool", h =>
+            {
+                if (Gtk.Global.MajorVersion >= 3 && Gtk.Global.MinorVersion >= 16)
+                    Global.UseHeaderBar = Gtk3Wrapper.gtk_application_prefers_app_menu(h.Control.Handle);
+            });
+
             Style.Add<FormHandler>("MainWindow", h =>
             {
                 if (!Global.UseHeaderBar)
@@ -203,25 +209,7 @@ namespace MonoGame.Tools.Pipeline
                 h.Control.ShowAll();
             });
 
-            Style.Add<DialogHandler>("HeaderBar", h =>
-            {
-                var title = h.Title;
-                var headerBar = Gtk3Wrapper.gtk_header_bar_new();
-                Gtk3Wrapper.gtk_window_set_titlebar(h.Control.Handle, headerBar);
-                h.Title = title;
-
-                if (h.AbortButton.Text == "Close")
-                {
-                    Gtk3Wrapper.gtk_header_bar_set_show_close_button(headerBar, true);
-                    return;
-                }
-
-                var defButton = (Gtk.Button)h.DefaultButton.ControlObject;
-                defButton.StyleContext.AddClass("suggested-action");
-
-                Gtk3Wrapper.gtk_header_bar_pack_end(headerBar, defButton.Handle);
-                Gtk3Wrapper.gtk_header_bar_pack_start(headerBar, ((Gtk.Button)h.AbortButton.ControlObject).Handle);
-            });
+            Style.Add<ButtonHandler>("Destuctive", h => h.Control.StyleContext.AddClass("destructive-action"));
 
             Style.Add<LabelHandler>("Wrap", h => h.Control.MaxWidthChars = 55);
 

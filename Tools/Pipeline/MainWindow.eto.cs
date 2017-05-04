@@ -17,13 +17,13 @@ namespace MonoGame.Tools.Pipeline
         public Command cmdBuild, cmdRebuild, cmdClean, cmdCancelBuild;
         public CheckCommand cmdDebugMode;
         public Command cmdHelp, cmdAbout;
-        public Command cmdOpenItem, cmdOpenItemWith, cmdOpenItemLocation, cmdCopyAssetPath, cmdRebuildItem;
+        public Command cmdOpenItem, cmdOpenItemWith, cmdOpenItemLocation, cmdOpenOutputItemLocation, cmdCopyAssetPath, cmdRebuildItem;
 
         MenuBar menubar;
         ToolBar toolbar;
         ButtonMenuItem menuFile, menuRecent, menuEdit, menuAdd, menuView, menuBuild, menuHelp;
         ToolItem toolBuild, toolRebuild, toolClean, toolCancelBuild;
-        MenuItem cmOpenItem, cmOpenItemWith, cmOpenItemLocation, cmCopyAssetPath, cmRebuildItem, cmExclude, cmRename, cmDelete;
+        MenuItem cmOpenItem, cmOpenItemWith, cmOpenItemLocation, cmOpenOutputItemLocation, cmCopyAssetPath, cmRebuildItem, cmExclude, cmRename, cmDelete;
         ButtonMenuItem cmAdd;
 
         ProjectControl projectControl;
@@ -36,8 +36,8 @@ namespace MonoGame.Tools.Pipeline
         {
             Title = "MonoGame Pipeline Tool";
             Icon = Icon.FromResource("Icons.monogame.png");
-            Width = 750;
-            Height = 550;
+            Size = new Size(750, 550);
+            MinimumSize = new Size(400, 400);
 
             InitalizeCommands();
             InitalizeMenu();
@@ -47,12 +47,15 @@ namespace MonoGame.Tools.Pipeline
             splitterHorizontal = new Splitter();
             splitterHorizontal.Orientation = Orientation.Horizontal;
             splitterHorizontal.Position = 200;
+            splitterHorizontal.Panel1MinimumSize = 100;
+            splitterHorizontal.Panel2MinimumSize = 100;
 
             splitterVertical = new Splitter();
-            splitterVertical.Width = 150;
             splitterVertical.Orientation = Orientation.Vertical;
             splitterVertical.Position = 230;
             splitterVertical.FixedPanel = SplitterFixedPanel.None;
+            splitterVertical.Panel1MinimumSize = 100;
+            splitterVertical.Panel2MinimumSize = 100;
 
             projectControl = new ProjectControl();
             _pads.Add(projectControl);
@@ -101,6 +104,7 @@ namespace MonoGame.Tools.Pipeline
             cmdOpenItem.Executed += CmdOpenItem_Executed;
             cmdOpenItemWith.Executed += CmdOpenItemWith_Executed;
             cmdOpenItemLocation.Executed += CmdOpenItemLocation_Executed;
+            cmdOpenOutputItemLocation.Executed += CmdOpenOutputItemLocation_Executed;
             cmdCopyAssetPath.Executed += CmdCopyAssetPath_Executed;
             cmdRebuildItem.Executed += CmdRebuildItem_Executed;
         }
@@ -241,6 +245,9 @@ namespace MonoGame.Tools.Pipeline
             cmdOpenItemLocation = new Command();
             cmdOpenItemLocation.MenuText = "Open Containing Directory";
 
+            cmdOpenOutputItemLocation = new Command();
+            cmdOpenOutputItemLocation.MenuText = "Open Output Directory";
+
             cmdCopyAssetPath = new Command();
             cmdCopyAssetPath.MenuText = "Copy Asset Path";
 
@@ -336,6 +343,7 @@ namespace MonoGame.Tools.Pipeline
             cmAdd.Items.Add(cmdExistingFolder.CreateMenuItem());
 
             cmOpenItemLocation = cmdOpenItemLocation.CreateMenuItem();
+            cmOpenOutputItemLocation = cmdOpenOutputItemLocation.CreateMenuItem();
             cmCopyAssetPath = cmdCopyAssetPath.CreateMenuItem();
             cmRebuildItem = cmdRebuildItem.CreateMenuItem();
             cmExclude = cmdExclude.CreateMenuItem();
