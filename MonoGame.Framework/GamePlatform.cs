@@ -3,6 +3,7 @@
 // file 'LICENSE.txt', which is part of this source code package.
 
 using System;
+using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Input.Touch;
 
@@ -253,11 +254,24 @@ namespace Microsoft.Xna.Framework
         protected virtual void OnIsMouseVisibleChanged() {}
 
         /// <summary>
-        /// Used by the GraphicsDeviceManager to update the platform window
-        /// after the graphics device has changed the presentation.
+        /// Called by the GraphicsDeviceManager to notify the platform window
+        /// when the graphics device is going to change the presentation. This function
+        /// can also update the presentation parameters to match window properties.
+        /// For example when switching to soft full screen the back buffer size should
+        /// be set to the client bounds of the window after it has been maximized.
         /// </summary>
-        internal virtual void OnPresentationChanged()
-        {            
+        /// <param name="pp">The new presentation parameters.</param>
+        internal virtual void OnPresentationChanging(PresentationParameters pp)
+        {
+        }
+
+        /// <summary>
+        /// Called by the GraphicsDeviceManager to notify the platform
+        /// when the graphics device has changed the presentation.
+        /// </summary>
+        /// <param name="pp">The new presentation parameters.</param>
+        internal virtual void OnPresentationChanged(PresentationParameters pp)
+        {
         }
 
         #endregion Methods
