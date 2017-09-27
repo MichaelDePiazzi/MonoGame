@@ -134,8 +134,10 @@ namespace Microsoft.Xna.Framework.Audio
                     (Speakers) MasterVoice.ChannelMask;
 #endif
             }
-            catch
+            catch (Exception ex)
             {
+                MonoGameDebug.LogDebugMessage($"SoundEffect initialization failed! {ex.GetType()}: {ex.Message}");
+
                 // Release the device and null it as
                 // we have no audio support.
                 if (Device != null)
