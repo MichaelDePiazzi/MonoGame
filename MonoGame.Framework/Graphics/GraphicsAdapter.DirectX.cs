@@ -13,6 +13,8 @@ namespace Microsoft.Xna.Framework.Graphics
     {
         SharpDX.DXGI.Adapter1 _adapter;
 
+        public Rectangle DesktopBounds { get; private set; }
+
         private static void PlatformInitializeAdapters(out ReadOnlyCollection<GraphicsAdapter> adapters)
         {
             var factory = new SharpDX.DXGI.Factory1();
@@ -63,6 +65,8 @@ namespace Microsoft.Xna.Framework.Graphics
 
             var desktopWidth = monitor.Description.DesktopBounds.Right - monitor.Description.DesktopBounds.Left;
             var desktopHeight = monitor.Description.DesktopBounds.Bottom - monitor.Description.DesktopBounds.Top;
+
+            adapter.DesktopBounds = new Rectangle(monitor.Description.DesktopBounds.Left, monitor.Description.DesktopBounds.Top, desktopWidth, desktopHeight);
 
             var modes = new List<DisplayMode>();
 
