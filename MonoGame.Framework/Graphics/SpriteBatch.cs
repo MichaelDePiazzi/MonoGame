@@ -483,6 +483,61 @@ namespace Microsoft.Xna.Framework.Graphics
 			FlushIfNeeded();
 		}
 
+	    public void Draw(Texture2D texture,
+	        ref VertexPositionColorTexture vertexTL, ref VertexPositionColorTexture vertexTR,
+	        ref VertexPositionColorTexture vertexBL, ref VertexPositionColorTexture vertexBR,
+	        float layerDepth = 0f)
+	    {
+	        CheckValid(texture);
+
+	        var item = _batcher.CreateBatchItem();
+
+	        item.Texture = texture;
+
+	        switch (_sortMode)
+	        {
+	            case SpriteSortMode.Texture:
+	                item.SortKey = texture.SortingKey;
+	                break;
+	            case SpriteSortMode.FrontToBack:
+	                item.SortKey = layerDepth;
+	                break;
+	            case SpriteSortMode.BackToFront:
+	                item.SortKey = -layerDepth;
+	                break;
+	        }
+
+	        item.SetVertices(ref vertexTL, ref vertexTR, ref vertexBL, ref vertexBR);
+
+	        FlushIfNeeded();
+	    }
+
+	    public void Draw(Texture2D texture, VertexPositionColorTexture[] vertices, float layerDepth = 0f)
+	    {
+	        CheckValid(texture);
+
+	        var item = _batcher.CreateBatchItem();
+
+	        item.Texture = texture;
+
+	        switch (_sortMode)
+	        {
+	            case SpriteSortMode.Texture:
+	                item.SortKey = texture.SortingKey;
+	                break;
+	            case SpriteSortMode.FrontToBack:
+	                item.SortKey = layerDepth;
+	                break;
+	            case SpriteSortMode.BackToFront:
+	                item.SortKey = -layerDepth;
+	                break;
+	        }
+
+	        item.SetVertices(vertices);
+
+	        FlushIfNeeded();
+	    }
+
 		// Mark the end of a draw operation for Immediate SpriteSortMode.
 		internal void FlushIfNeeded()
 		{
