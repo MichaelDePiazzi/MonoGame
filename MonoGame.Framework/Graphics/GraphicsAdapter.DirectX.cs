@@ -5,7 +5,6 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
 
 namespace Microsoft.Xna.Framework.Graphics
 {
@@ -89,6 +88,7 @@ namespace Microsoft.Xna.Framework.Graphics
                     MonoGameDebug.LogDebugMessage($"Failed to get display mode list! {ex.GetType()}: {ex.Message}");
                     var mode = new DisplayMode(desktopWidth, desktopHeight, SurfaceFormat.Color);
                     modes.Add(mode);
+                    adapter._currentDisplayMode = mode;
                     break;
                 }
 
@@ -102,16 +102,22 @@ namespace Microsoft.Xna.Framework.Graphics
                         continue;
 
                     modes.Add(mode);
+
+                    if (adapter._currentDisplayMode == null)
+                    {
+                        if (mode.Width == desktopWidth && mode.Height == desktopHeight && mode.Format == SurfaceFormat.Color)
+                            adapter._currentDisplayMode = mode;
+                    }
                 }
             }
 
             adapter._supportedDisplayModes = new DisplayModeCollection(modes);
-            adapter._currentDisplayMode = adapter._supportedDisplayModes.FindClosestMode(desktopWidth, desktopHeight);
 
-            if (adapter._currentDisplayMode == null)
-                MonoGameDebug.LogDebugMessage($"Current display mode ({desktopWidth}x{desktopHeight}) not found, nor was a fallback!");
-            else if ((adapter._currentDisplayMode.Width != desktopWidth) || (adapter._currentDisplayMode.Height != desktopHeight))
-                MonoGameDebug.LogDebugMessage($"Current display mode ({desktopWidth}x{desktopHeight}) not found! Using {adapter._currentDisplayMode.Width}x{adapter._currentDisplayMode.Height} instead.");
+            if (adapter._currentDisplayMode == null) //(i.e. desktop mode wasn't found in the available modes)
+            {
+                adapter._currentDisplayMode = new DisplayMode(desktopWidth, desktopHeight, SurfaceFormat.Color);
+                MonoGameDebug.LogDebugMessage($"Current display mode ({desktopWidth}x{desktopHeight}) not found!");
+            }
 
             return adapter;
         }

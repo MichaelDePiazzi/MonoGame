@@ -77,20 +77,5 @@ namespace Microsoft.Xna.Framework.Graphics
 
             _modes = modes;
         }
-
-        internal DisplayMode FindClosestMode(int desiredWidth, int desiredHeight)
-        {
-            // NOTE: Assumes modes are sorted in ascending order
-            DisplayMode closestMode = null;
-            foreach (var mode in _modes)
-            {
-                if ((mode.Format != SurfaceFormat.Color) || (mode.Width > desiredWidth) || (mode.Height > desiredHeight))
-                    continue;
-                closestMode = mode;
-                if ((mode.Width == desiredWidth) && (mode.Height == desiredHeight))
-                    break;
-            }
-            return closestMode;
-        }
     }
 }
