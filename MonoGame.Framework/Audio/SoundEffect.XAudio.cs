@@ -133,6 +133,8 @@ namespace Microsoft.Xna.Framework.Audio
                     Device.GetDeviceDetails(deviceId).OutputFormat.ChannelMask:
                     (Speakers) MasterVoice.ChannelMask;
 #endif
+
+                MonoGameDebug.LogDebugMessage($"XAudio2 initialized ({Device.Version})");
             }
             catch (Exception ex)
             {
