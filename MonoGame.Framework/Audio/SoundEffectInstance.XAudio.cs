@@ -33,7 +33,7 @@ namespace Microsoft.Xna.Framework.Audio
         private void PlatformApply3D(AudioListener listener, AudioEmitter emitter)
         {
             // If we have no voice then nothing to do.
-            if (_voice == null)
+            if (_voice == null || SoundEffect.MasterVoice == null)
                 return;
 
             // Convert from XNA Emitter to a SharpDX Emitter
@@ -164,14 +164,14 @@ namespace Microsoft.Xna.Framework.Audio
 
         private void PlatformPause()
         {
-            if (_voice != null)
+            if (_voice != null && SoundEffect.MasterVoice != null)
                 _voice.Stop();
             _paused = true;
         }
 
         private void PlatformPlay()
         {
-            if (_voice != null)
+            if (_voice != null && SoundEffect.MasterVoice != null)
             {
                 // Choose the correct buffer depending on if we are looped.            
                 var buffer = _loop ? _effect._loopedBuffer : _effect._buffer;
@@ -191,7 +191,7 @@ namespace Microsoft.Xna.Framework.Audio
 
         private void PlatformResume()
         {
-            if (_voice != null)
+            if (_voice != null && SoundEffect.MasterVoice != null)
             {
                 // Restart the sound if (and only if) it stopped playing
                 if (!_loop)
@@ -210,7 +210,7 @@ namespace Microsoft.Xna.Framework.Audio
 
         private void PlatformStop(bool immediate)
         {
-            if (_voice != null)
+            if (_voice != null && SoundEffect.MasterVoice != null)
             {
                 if (immediate)
                 {
@@ -241,7 +241,7 @@ namespace Microsoft.Xna.Framework.Audio
             _pan = MathHelper.Clamp(value, -1.0f, 1.0f);
 
             // If we have no voice then nothing more to do.
-            if (_voice == null)
+            if (_voice == null || SoundEffect.MasterVoice == null)
                 return;
 
             UpdateOutputMatrix();
@@ -309,7 +309,7 @@ namespace Microsoft.Xna.Framework.Audio
         {
             _pitch = value;
 
-            if (_voice == null)
+            if (_voice == null || SoundEffect.MasterVoice == null)
                 return;
 
             // NOTE: This is copy of what XAudio2.SemitonesToFrequencyRatio() does
@@ -321,7 +321,7 @@ namespace Microsoft.Xna.Framework.Audio
         private SoundState PlatformGetState()
         {
             // If no voice or no buffers queued the sound is stopped.
-            if (_voice == null || _voice.State.BuffersQueued == 0)
+            if (_voice == null || SoundEffect.MasterVoice == null || _voice.State.BuffersQueued == 0)
                 return SoundState.Stopped;
 
             // Because XAudio2 does not actually provide if a SourceVoice is Started / Stopped
@@ -334,7 +334,7 @@ namespace Microsoft.Xna.Framework.Audio
 
         private void PlatformSetVolume(float value)
         {
-            if (_voice != null)
+            if (_voice != null && SoundEffect.MasterVoice != null)
                 _voice.SetVolume(value, XAudio2.CommitNow);
         }
 
@@ -344,7 +344,7 @@ namespace Microsoft.Xna.Framework.Audio
             _reverbMix = MathHelper.Clamp(mix, 0, 2);
 
             // If we have no voice then nothing more to do.
-            if (_voice == null)
+            if (_voice == null || SoundEffect.MasterVoice == null)
                 return;
 
             if (!(_reverbMix > 0.0f))
@@ -360,7 +360,7 @@ namespace Microsoft.Xna.Framework.Audio
 
         internal void PlatformSetFilter(FilterMode mode, float filterQ, float frequency)
         {
-            if (_voice == null)
+            if (_voice == null || SoundEffect.MasterVoice == null)
                 return;
 
             var filter = new FilterParameters 
@@ -374,7 +374,7 @@ namespace Microsoft.Xna.Framework.Audio
 
         internal void PlatformClearFilter()
         {
-            if (_voice == null)
+            if (_voice == null || SoundEffect.MasterVoice == null)
                 return;
 
             var filter = new FilterParameters { Frequency = 1.0f, OneOverQ = 1.0f, Type = FilterType.LowPassFilter };
@@ -388,7 +388,7 @@ namespace Microsoft.Xna.Framework.Audio
                 if (_reverb != null)
                     _reverb.Dispose();
 
-                if (_voice != null)
+                if (_voice != null && SoundEffect.MasterVoice != null)
                 {
                     _voice.DestroyVoice();
                     _voice.Dispose();
