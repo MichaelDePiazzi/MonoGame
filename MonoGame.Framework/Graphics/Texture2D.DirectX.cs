@@ -344,7 +344,7 @@ namespace Microsoft.Xna.Framework.Graphics
 
             fconv.Initialize(
                 decoder.GetFrame(0),
-                PixelFormat.Format32bppRGBA,
+                PixelFormat.Format32bppPRGBA,
                 BitmapDitherType.None, null,
                 0.0, BitmapPaletteType.Custom);
 
