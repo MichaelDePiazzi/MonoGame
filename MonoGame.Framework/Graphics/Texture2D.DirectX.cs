@@ -223,19 +223,19 @@ namespace Microsoft.Xna.Framework.Graphics
             // The data returned is always four channel BGRA
             var data = reader.Read(stream, out width, out height, out channels, Imaging.STBI_rgb_alpha);
 
-            // XNA blacks out any pixels with an alpha of zero.
+            // Pre-multiply alpha
             if (channels == 4)
             {
                 fixed (byte* b = &data[0])
                 {
                     for (var i = 0; i < data.Length; i += 4)
                     {
-                        if (b[i + 3] == 0)
-                        {
-                            b[i + 0] = 0;
-                            b[i + 1] = 0;
-                            b[i + 2] = 0;
-                        }
+                        var a = b[i + 3];
+                        if (a == 255)
+                            continue;
+                        var mult = a / 255f;
+                        for (int j = i; j <= (i + 2); j++)
+                            b[j] = Convert.ToByte(b[j] * mult);
                     }
                 }
             }
