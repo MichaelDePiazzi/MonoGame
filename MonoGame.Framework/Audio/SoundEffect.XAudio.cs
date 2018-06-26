@@ -108,6 +108,7 @@ namespace Microsoft.Xna.Framework.Audio
 #endif
                     {
                         Device = new XAudio2(XAudio2Flags.None, ProcessorSpecifier.DefaultProcessor);
+                        MonoGameLogger.LogMessage(MonoGameLogLevel.Debug, $"Created XAudio2 {Device.Version} device");
                         Device.StartEngine();
                     }
                 }
@@ -134,11 +135,15 @@ namespace Microsoft.Xna.Framework.Audio
                     (Speakers) MasterVoice.ChannelMask;
 #endif
 
-                MonoGameDebug.LogDebugMessage($"XAudio2 initialized ({Device.Version})");
+                MonoGameLogger.LogMessage(MonoGameLogLevel.Info, $"XAudio2 initialized ({Device.Version}, {Speakers} speakers)");
             }
             catch (Exception ex)
             {
-                MonoGameDebug.LogDebugMessage($"SoundEffect initialization failed! {ex.GetType()}: {ex.Message}");
+                MonoGameLogger.LogMessage(MonoGameLogLevel.Error, "SoundEffect initialization failed!\r\n" +
+                    $"Exception type: {ex.GetType()}\r\n" +
+                    $"Message: {ex.Message}\r\n" +
+                    $"Source: {ex.Source}\r\n" +
+                    $"Stack trace:\r\n{ex.StackTrace}");
 
                 // Release the device and null it as
                 // we have no audio support.
