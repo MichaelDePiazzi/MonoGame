@@ -23,6 +23,7 @@ namespace Microsoft.Xna.Framework.Media
             Paused,
             WaitingForSessionStop,
             PresentationEnded,
+            Closed,
         }
 
         private InternalState _internalState;
@@ -87,6 +88,11 @@ namespace Microsoft.Xna.Framework.Media
 
             MediaManagerState.CheckStartup();
             MediaFactory.CreateMediaSession(null, out _session);
+
+            _callback = new Callback(this);
+            _session.BeginGetEvent(_callback, null);
+
+            _clock = _session.Clock.QueryInterface<PresentationClock>();
         }
 
         private void CreateTexture()
@@ -164,6 +170,12 @@ namespace Microsoft.Xna.Framework.Media
                 PlatformStop();
             }
 
+            if (_volumeController != null)
+            {
+                _volumeController.Dispose();
+                _volumeController = null;
+            }
+
             CreateTexture();
 
             // Create the callback if it hasn't been created yet
@@ -191,7 +203,7 @@ namespace Microsoft.Xna.Framework.Media
 
         private void PlatformStop()
         {
-            if (State == MediaState.Playing)
+            if (State != MediaState.Stopped)
             {
                 _internalState = InternalState.WaitingForSessionStop;
                 _session.Stop();
@@ -262,11 +274,21 @@ namespace Microsoft.Xna.Framework.Media
 
         private void PlatformDispose(bool disposing)
         {
+            if ((_session != null) && !_session.IsDisposed)
+            {
+                _session.Close();
+                WaitForInternalStateChange(InternalState.Closed, 5000);
+
+                _session.Shutdown();
+
+                _session.Dispose();
+                _session = null;
+            }
+
             if (disposing)
             {
                 SharpDX.Utilities.Dispose(ref _volumeController);
                 SharpDX.Utilities.Dispose(ref _clock);
-                SharpDX.Utilities.Dispose(ref _session);
                 SharpDX.Utilities.Dispose(ref _texture);
                 SharpDX.Utilities.Dispose(ref _callback);
             }
@@ -295,9 +317,6 @@ namespace Microsoft.Xna.Framework.Media
 
             SetChannelVolumes();
 
-            // Get the clock.
-            _clock = _session.Clock.QueryInterface<PresentationClock>();
-
             // Start playing.
             var varStart = new Variant();
             _session.Start(null, varStart);
@@ -310,19 +329,12 @@ namespace Microsoft.Xna.Framework.Media
 
         private void OnSessionStopped()
         {
-            _session.Close();
+            _internalState = InternalState.Stopped;
         }
  
         private void OnSessionClosed()
         {
-            if (_volumeController != null)
-            {
-                _volumeController.Dispose();
-                _volumeController = null;
-            }
-            _clock.Dispose();
-            _clock = null;
-            _internalState = InternalState.Stopped;
+            _internalState = InternalState.Closed;
         }
 
         private void OnSessionPaused()

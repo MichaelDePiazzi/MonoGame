@@ -15,7 +15,7 @@ namespace Microsoft.Xna.Framework.Media
 
         internal VideoSampleGrabber SampleGrabber { get; private set; }
 
-        MediaType _mediaType;
+        private SharpDX.MediaFoundation.MediaSource _mediaSource;
 
         private void PlatformInitialize()
         {
@@ -26,21 +26,19 @@ namespace Microsoft.Xna.Framework.Media
 
             MediaFactory.CreateTopology(out _topology);
 
-            SharpDX.MediaFoundation.MediaSource mediaSource;
             {
                 SourceResolver resolver = new SourceResolver();
-
-                ObjectType otype;
-                ComObject source = resolver.CreateObjectFromURL(FileName, SourceResolverFlags.MediaSource, null, out otype);
-                mediaSource = source.QueryInterface<SharpDX.MediaFoundation.MediaSource>();
+                ComObject source = resolver.CreateObjectFromURL(FileName, SourceResolverFlags.MediaSource);
+                _mediaSource = source.QueryInterface<SharpDX.MediaFoundation.MediaSource>();
                 resolver.Dispose();
                 source.Dispose();
             }
 
             PresentationDescriptor presDesc;
-            mediaSource.CreatePresentationDescriptor(out presDesc);
+            _mediaSource.CreatePresentationDescriptor(out presDesc);
 
-            for (var i = 0; i < presDesc.StreamDescriptorCount; i++)
+            var descriptorCount = presDesc.StreamDescriptorCount;
+            for (var i = 0; i < descriptorCount; i++)
             {
                 SharpDX.Mathematics.Interop.RawBool selected;
                 StreamDescriptor desc;
@@ -51,29 +49,31 @@ namespace Microsoft.Xna.Framework.Media
                     TopologyNode sourceNode;
                     MediaFactory.CreateTopologyNode(TopologyType.SourceStreamNode, out sourceNode);
 
-                    sourceNode.Set(TopologyNodeAttributeKeys.Source, mediaSource);
+                    sourceNode.Set(TopologyNodeAttributeKeys.Source, _mediaSource);
                     sourceNode.Set(TopologyNodeAttributeKeys.PresentationDescriptor, presDesc);
                     sourceNode.Set(TopologyNodeAttributeKeys.StreamDescriptor, desc);
 
                     TopologyNode outputNode;
                     MediaFactory.CreateTopologyNode(TopologyType.OutputNode, out outputNode);
+                    outputNode.Set(TopologyNodeAttributeKeys.NoshutdownOnRemove, false);
 
-                    var majorType = desc.MediaTypeHandler.MajorType;
+                    var typeHandler = desc.MediaTypeHandler;
+                    var majorType = typeHandler.MajorType;
                     if (majorType == MediaTypeGuids.Video)
                     {
                         Activate activate;
 
                         SampleGrabber = new VideoSampleGrabber();
 
-                        _mediaType = new MediaType();
+                        var mediaType = new MediaType();
+                        mediaType.Set(MediaTypeAttributeKeys.MajorType, MediaTypeGuids.Video);
+                        mediaType.Set(MediaTypeAttributeKeys.Subtype, VideoFormatGuids.Rgb32);
 
-                        _mediaType.Set(MediaTypeAttributeKeys.MajorType, MediaTypeGuids.Video);
-
-                        // Specify that we want the data to come in as RGB32.
-                        _mediaType.Set(MediaTypeAttributeKeys.Subtype, new Guid("00000016-0000-0010-8000-00AA00389B71"));
-
-                        MediaFactory.CreateSampleGrabberSinkActivate(_mediaType, SampleGrabber, out activate);
+                        MediaFactory.CreateSampleGrabberSinkActivate(mediaType, SampleGrabber, out activate);
                         outputNode.Object = activate;
+
+                        activate.Dispose();
+                        mediaType.Dispose();
                     }
 
                     if (majorType == MediaTypeGuids.Audio)
@@ -82,6 +82,7 @@ namespace Microsoft.Xna.Framework.Media
                         MediaFactory.CreateAudioRendererActivate(out activate);
 
                         outputNode.Object = activate;
+                        activate.Dispose();
                     }
 
                     _topology.AddNode(sourceNode);
@@ -90,13 +91,13 @@ namespace Microsoft.Xna.Framework.Media
 
                     sourceNode.Dispose();
                     outputNode.Dispose();
+                    typeHandler.Dispose();
                 }
 
                 desc.Dispose();
             }
 
             presDesc.Dispose();
-            mediaSource.Dispose();
         }
 
         private void PlatformDispose(bool disposing)
@@ -111,6 +112,13 @@ namespace Microsoft.Xna.Framework.Media
             {
                 SampleGrabber.Dispose();
                 SampleGrabber = null;
+            }
+
+            if ((_mediaSource != null) && !_mediaSource.IsDisposed)
+            {
+                _mediaSource.Shutdown();
+                _mediaSource.Dispose();
+                _mediaSource = null;
             }
         }
     }
