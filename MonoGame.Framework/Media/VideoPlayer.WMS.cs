@@ -40,6 +40,10 @@ namespace Microsoft.Xna.Framework.Media
         private Texture2D _texture;
         private Callback _callback;
         internal MediaSession Session { get { return _session; } }
+        private Topology _currentTopology;
+
+        private static readonly Variant PositionCurrent = new Variant();
+        private static readonly Variant PositionBeginning = new Variant { ElementType = VariantElementType.Long, Value = 0L };
 
         private class Callback : IAsyncCallback
         {
@@ -170,24 +174,25 @@ namespace Microsoft.Xna.Framework.Media
                 PlatformStop();
             }
 
-            if (_volumeController != null)
+            if (_currentTopology != _currentVideo.Topology)
             {
-                _volumeController.Dispose();
-                _volumeController = null;
+                if (_volumeController != null)
+                {
+                    _volumeController.Dispose();
+                    _volumeController = null;
+                }
+
+                CreateTexture();
+
+                // Set the new video.
+                _currentTopology = _currentVideo.Topology;
+                _internalState = InternalState.WaitingForSessionStart;
+                _session.SetTopology(SessionSetTopologyFlags.Immediate, _currentVideo.Topology);
             }
-
-            CreateTexture();
-
-            // Create the callback if it hasn't been created yet
-            if (_callback == null)
+            else
             {
-                _callback = new Callback(this);
-                _session.BeginGetEvent(_callback, null);
+                _session.Start(null, PositionBeginning);
             }
-
-            // Set the new video.
-            _internalState = InternalState.WaitingForSessionStart;
-            _session.SetTopology(SessionSetTopologyFlags.Immediate, _currentVideo.Topology);
 
             WaitForInternalStateChange(InternalState.Playing);
         }
@@ -195,9 +200,7 @@ namespace Microsoft.Xna.Framework.Media
         private void PlatformResume()
         {
             _internalState = InternalState.WaitingForSessionStart;
-            // A variant is required for the second parameter of Start() otherwise it throws an invalid pointer error
-            var varStart = new Variant();
-            _session.Start(null, varStart);
+            _session.Start(null, PositionCurrent);
             WaitForInternalStateChange(InternalState.Playing);
         }
 
@@ -318,8 +321,7 @@ namespace Microsoft.Xna.Framework.Media
             SetChannelVolumes();
 
             // Start playing.
-            var varStart = new Variant();
-            _session.Start(null, varStart);
+            _session.Start(null, PositionBeginning);
         }
 
         private void OnSessionStarted()
@@ -346,8 +348,7 @@ namespace Microsoft.Xna.Framework.Media
         {
             if (_isLooped)
             {
-                var varStart = new Variant();
-                _session.Start(null, varStart);
+                _session.Start(null, PositionBeginning);
                 WaitForInternalStateChange(InternalState.Playing);
             }
             else
