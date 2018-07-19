@@ -45,7 +45,7 @@ namespace Microsoft.Xna.Framework.Media
         private static readonly Variant PositionCurrent = new Variant();
         private static readonly Variant PositionBeginning = new Variant { ElementType = VariantElementType.Long, Value = 0L };
 
-        private class Callback : IAsyncCallback
+        private class Callback : AsyncCallbackBase
         {
             private VideoPlayer _player;
 
@@ -54,14 +54,17 @@ namespace Microsoft.Xna.Framework.Media
                 _player = player;
             }
 
-            public void Dispose()
+            protected override void Dispose(bool disposing)
             {
+                base.Dispose(disposing);
+                _player = null;
             }
 
-            public IDisposable Shadow { get; set; }
-
-            public void Invoke(AsyncResult asyncResultRef)
+            public override void Invoke(AsyncResult asyncResultRef)
             {
+                if ((_player == null) || (_player.Session == null))
+                    return;
+
                 var ev = _player.Session.EndGetEvent(asyncResultRef);
 
                 // Trigger an "on Video Ended" event here if needed
@@ -72,7 +75,11 @@ namespace Microsoft.Xna.Framework.Media
                 else if (ev.TypeInfo == MediaEventTypes.SessionStopped)
                     _player.OnSessionStopped();
                 else if (ev.TypeInfo == MediaEventTypes.SessionClosed)
+                {
+                    // The session has been closed, no further events should be generated
                     _player.OnSessionClosed();
+                    return;
+                }
                 else if (ev.TypeInfo == MediaEventTypes.SessionPaused)
                     _player.OnSessionPaused();
                 else if (ev.TypeInfo == MediaEventTypes.EndOfPresentation)
@@ -80,9 +87,6 @@ namespace Microsoft.Xna.Framework.Media
 
                 _player.Session.BeginGetEvent(this, null);
             }
-
-            public AsyncCallbackFlags Flags { get; private set; }
-            public WorkQueueId WorkQueueId { get; private set; }
         }
 
         private void PlatformInitialize()
@@ -277,6 +281,9 @@ namespace Microsoft.Xna.Framework.Media
 
         private void PlatformDispose(bool disposing)
         {
+            if (!disposing)
+                return;
+
             if ((_session != null) && !_session.IsDisposed)
             {
                 _session.Close();
@@ -284,17 +291,13 @@ namespace Microsoft.Xna.Framework.Media
 
                 _session.Shutdown();
 
-                _session.Dispose();
-                _session = null;
+                SharpDX.Utilities.Dispose(ref _session);
             }
 
-            if (disposing)
-            {
-                SharpDX.Utilities.Dispose(ref _volumeController);
-                SharpDX.Utilities.Dispose(ref _clock);
-                SharpDX.Utilities.Dispose(ref _texture);
-                SharpDX.Utilities.Dispose(ref _callback);
-            }
+            SharpDX.Utilities.Dispose(ref _volumeController);
+            SharpDX.Utilities.Dispose(ref _clock);
+            SharpDX.Utilities.Dispose(ref _texture);
+            SharpDX.Utilities.Dispose(ref _callback);
         }
 
         private void OnTopologyReady()
