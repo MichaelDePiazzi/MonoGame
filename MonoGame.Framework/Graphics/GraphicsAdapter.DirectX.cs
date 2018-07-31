@@ -13,6 +13,12 @@ namespace Microsoft.Xna.Framework.Graphics
     {
         SharpDX.DXGI.Adapter1 _adapter;
 
+        /// <summary>
+        /// Returns a handle to internal adapter object. Valid only on DirectX platforms.
+        /// For usage, convert this to SharpDX.DXGI.Adapter1.
+        /// </summary>
+        public object Handle { get { return _adapter; } }
+
         public Rectangle DesktopBounds { get; private set; }
 
         private static void PlatformInitializeAdapters(out ReadOnlyCollection<GraphicsAdapter> adapters)
