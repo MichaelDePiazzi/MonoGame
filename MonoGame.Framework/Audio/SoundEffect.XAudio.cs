@@ -124,6 +124,8 @@ namespace Microsoft.Xna.Framework.Audio
                 {
                     // Let windows autodetect number of channels and sample rate.
                     MasterVoice = new MasteringVoice(Device, XAudio2.DefaultChannels, XAudio2.DefaultSampleRate);
+                    var voiceDetails = MasterVoice.VoiceDetails;
+                    MonoGameLogger.LogMessage(MonoGameLogLevel.Debug, $"Created XAudio2 master voice ({voiceDetails.InputChannelCount} channels @ {voiceDetails.InputSampleRate} Hz)");
                 }
 
                 // The autodetected value of MasterVoice.ChannelMask corresponds to the speaker layout.
