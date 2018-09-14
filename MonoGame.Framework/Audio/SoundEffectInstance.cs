@@ -90,6 +90,8 @@ namespace Microsoft.Xna.Framework.Audio
         /// <summary>Indicates whether the object is disposed.</summary>
         public bool IsDisposed { get { return _isDisposed; } }
 
+        public object Tag { get; set; }
+
         internal SoundEffectInstance()
         {
             _pan = 0.0f;

@@ -280,6 +280,16 @@ namespace Microsoft.Xna.Framework.Audio
             };
         }
 
+        public bool TryAssignToInstance(SoundEffectInstance instance)
+        {
+            if (instance._effect == this)
+                return true;
+            if ((instance._voice == null) || !_format.Equals(instance._format))
+                return false;
+            instance._effect = this;
+            return true;
+        }
+
         private void PlatformSetupInstance(SoundEffectInstance inst)
         {
             // If the instance came from the pool then it could
