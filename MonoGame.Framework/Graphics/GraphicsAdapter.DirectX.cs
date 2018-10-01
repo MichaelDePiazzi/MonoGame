@@ -25,7 +25,7 @@ namespace Microsoft.Xna.Framework.Graphics
         {
             var factory = new SharpDX.DXGI.Factory1();
 
-            var adapterCount = factory.GetAdapterCount();
+            var adapterCount = factory.GetAdapterCount1();
             var adapterList = new List<GraphicsAdapter>(adapterCount);
 
             for (var i = 0; i < adapterCount; i++)
