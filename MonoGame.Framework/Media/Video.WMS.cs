@@ -55,7 +55,6 @@ namespace Microsoft.Xna.Framework.Media
 
                     TopologyNode outputNode;
                     MediaFactory.CreateTopologyNode(TopologyType.OutputNode, out outputNode);
-                    outputNode.Set(TopologyNodeAttributeKeys.NoshutdownOnRemove, false);
 
                     var typeHandler = desc.MediaTypeHandler;
                     var majorType = typeHandler.MajorType;

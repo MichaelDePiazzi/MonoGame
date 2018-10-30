@@ -186,8 +186,10 @@ namespace Microsoft.Xna.Framework.Media
             if (_currentVideo == null)
                 return;
 
-            PlatformPause();
+            if (State != MediaState.Playing)
+                return;
 
+            PlatformPause();
             _state = MediaState.Paused;
         }
 
@@ -200,54 +202,9 @@ namespace Microsoft.Xna.Framework.Media
             if (video == null)
                 throw new ArgumentNullException("video is null.");
 
-            if (_currentVideo == video)
-            {
-                var state = State;
-							
-                // No work to do if we're already
-                // playing this video.
-                if (state == MediaState.Playing)
-                    return;
-
-                // If we try to Play the same video
-                // from a paused state, just resume it instead.
-                if (state == MediaState.Paused)
-                {
-                    PlatformResume();
-                    return;
-                }
-            }
-            
             _currentVideo = video;
-
             PlatformPlay();
-
             _state = MediaState.Playing;
-
-            // XNA doesn't return until the video is playing
-            const int retries = 5;
-            const int sleepTimeFactor = 50;
-
-            for (int i = 0; i < retries; i++)
-            {
-                if (State == MediaState.Playing )
-                {
-                    break;
-                }
-                var sleepTime = i*sleepTimeFactor;
-                Debug.WriteLine("State != MediaState.Playing ({0}) sleeping for {1} ms", i + 1, sleepTime);
-#if WINDOWS_UAP
-                Task.Delay(sleepTime).Wait();
-#else
-                Thread.Sleep(sleepTime); //Sleep for longer and longer times
-#endif
-            }
-            if (State != MediaState.Playing )
-            {
-                //We timed out - attempt to stop to fix any bad state
-                Stop();
-                throw new InvalidOperationException("cannot start video"); 
-            }
         }
 
         /// <summary>
@@ -258,20 +215,10 @@ namespace Microsoft.Xna.Framework.Media
             if (_currentVideo == null)
                 return;
 
-            var state = State;
-
-            // No work to do if we're already playing
-            if (state == MediaState.Playing)
+            if (State != MediaState.Paused)
                 return;
-
-            if (state == MediaState.Stopped)
-            {
-                PlatformPlay();
-                return;
-            }
 
             PlatformResume();
-
             _state = MediaState.Playing;
         }
 
@@ -283,8 +230,10 @@ namespace Microsoft.Xna.Framework.Media
             if (_currentVideo == null)
                 return;
 
-            PlatformStop();
+            if (State == MediaState.Stopped)
+                return;
 
+            PlatformStop();
             _state = MediaState.Stopped;
         }
 
