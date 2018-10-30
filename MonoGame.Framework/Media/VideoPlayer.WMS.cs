@@ -45,6 +45,8 @@ namespace Microsoft.Xna.Framework.Media
         private static readonly Variant PositionCurrent = new Variant();
         private static readonly Variant PositionBeginning = new Variant { ElementType = VariantElementType.Long, Value = 0L };
 
+        private static readonly double MillisecondsPerStopwatchTick = 1000.0 / System.Diagnostics.Stopwatch.Frequency;
+
         private class Callback : AsyncCallbackBase
         {
             private VideoPlayer _player;
@@ -222,19 +224,20 @@ namespace Microsoft.Xna.Framework.Media
             }
         }
 
-        bool WaitForInternalStateChange(InternalState expectedState, int milliseconds = defaultTimeoutMs)
+        private bool WaitForInternalStateChange(InternalState expectedState, int milliseconds = defaultTimeoutMs)
         {
-            var timer = System.Diagnostics.Stopwatch.StartNew();
+            var startTimestamp = System.Diagnostics.Stopwatch.GetTimestamp();
             while (_internalState != expectedState)
             {
+                var elapsedMilliseconds = (System.Diagnostics.Stopwatch.GetTimestamp() - startTimestamp) * MillisecondsPerStopwatchTick;
+                if (elapsedMilliseconds >= milliseconds)
+                    return false;
 #if WINRT
                 lock (_locker)
                     System.Threading.Monitor.Wait(_locker, 1);
 #else
                 Thread.Sleep(1);
 #endif
-                if (timer.ElapsedMilliseconds > milliseconds)
-                    return false;
             }
             return true;
         }
