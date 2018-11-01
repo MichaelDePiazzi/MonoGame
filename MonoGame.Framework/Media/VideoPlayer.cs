@@ -150,30 +150,11 @@ namespace Microsoft.Xna.Framework.Media
             if (_currentVideo == null)
                 throw new InvalidOperationException("Operation is not valid due to the current state of the object");
 
-            //XNA never returns a null texture
-            const int retries = 5;
-            const int sleepTimeFactor = 50;
-            Texture2D texture=null;
+            var texture = PlatformGetTexture();
 
-            for (int i = 0; i < retries; i++)
-            {
-                texture = PlatformGetTexture();
-                if (texture != null)
-                {
-                    break;
-                }
-                var sleepTime = i*sleepTimeFactor;
-                Debug.WriteLine("PlatformGetTexture returned null ({0}) sleeping for {1} ms", i + 1, sleepTime);
-#if WINDOWS_UAP
-                Task.Delay(sleepTime).Wait();
-#else
-                Thread.Sleep(sleepTime); //Sleep for longer and longer times
-#endif
-            }
+            //XNA never returns a null texture
             if (texture == null)
-            {
                 throw new InvalidOperationException("Platform returned a null texture");
-            }
 
             return texture;
         }
