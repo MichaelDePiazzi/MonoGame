@@ -242,8 +242,12 @@ namespace MonoGame.Framework
         private void OnDeactivate(object sender, EventArgs eventArgs)
         {
             // If in exclusive mode full-screen, force it out of exclusive mode and minimize the window
-            if (IsFullScreen && _platform.Game.GraphicsDevice.PresentationParameters.HardwareModeSwitch)
-                MinimizeFullScreen();
+            if (IsFullScreen)
+            {
+                var gd = Game.GraphicsDevice;
+                if ((gd != null) && gd.PresentationParameters.HardwareModeSwitch)
+                    MinimizeFullScreen();
+            }
             _platform.IsActive = false;
             Keyboard.SetActive(false);
         }
